@@ -1,0 +1,98 @@
+Index: .idea/workspace.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<project version=\"4\">\r\n  <component name=\"AutoImportSettings\">\r\n    <option name=\"autoReloadType\" value=\"SELECTIVE\" />\r\n  </component>\r\n  <component name=\"ChangeListManager\">\r\n    <list default=\"true\" id=\"4f7031e2-13e3-4faf-a87f-e8d670573ed8\" name=\"Changes\" comment=\"\" />\r\n    <option name=\"SHOW_DIALOG\" value=\"false\" />\r\n    <option name=\"HIGHLIGHT_CONFLICTS\" value=\"true\" />\r\n    <option name=\"HIGHLIGHT_NON_ACTIVE_CHANGELIST\" value=\"false\" />\r\n    <option name=\"LAST_RESOLUTION\" value=\"IGNORE\" />\r\n  </component>\r\n  <component name=\"FileTemplateManagerImpl\">\r\n    <option name=\"RECENT_TEMPLATES\">\r\n      <list>\r\n        <option value=\"Vue Composition API Component\" />\r\n      </list>\r\n    </option>\r\n  </component>\r\n  <component name=\"Git.Settings\">\r\n    <option name=\"RECENT_GIT_ROOT_PATH\" value=\"$PROJECT_DIR$\" />\r\n  </component>\r\n  <component name=\"KubernetesApiPersistence\">{}</component>\r\n  <component name=\"KubernetesApiProvider\">{\r\n  &quot;isMigrated&quot;: true\r\n}</component>\r\n  <component name=\"ProjectColorInfo\">{\r\n  &quot;associatedIndex&quot;: 0\r\n}</component>\r\n  <component name=\"ProjectId\" id=\"3Bge5oDeZ0XqX8gq3z6PU5m8cjM\" />\r\n  <component name=\"ProjectViewState\">\r\n    <option name=\"hideEmptyMiddlePackages\" value=\"true\" />\r\n    <option name=\"showLibraryContents\" value=\"true\" />\r\n  </component>\r\n  <component name=\"PropertiesComponent\"><![CDATA[{\r\n  \"keyToString\": {\r\n    \"ModuleVcsDetector.initialDetectionPerformed\": \"true\",\r\n    \"RunOnceActivity.ShowReadmeOnStart\": \"true\",\r\n    \"git-widget-placeholder\": \"master\",\r\n    \"last_opened_file_path\": \"C:/Users/Doge/Desktop/BS/Birdhaven/Birdhaven/src/assets/art\",\r\n    \"node.js.detected.package.eslint\": \"true\",\r\n    \"node.js.detected.package.tslint\": \"true\",\r\n    \"node.js.selected.package.eslint\": \"(autodetect)\",\r\n    \"node.js.selected.package.tslint\": \"(autodetect)\",\r\n    \"nodejs_package_manager_path\": \"npm\",\r\n    \"ts.external.directory.path\": \"C:\\\\Program Files\\\\JetBrains\\\\IntelliJ IDEA 2025.1.1.1\\\\plugins\\\\javascript-plugin\\\\jsLanguageServicesImpl\\\\external\",\r\n    \"vue.rearranger.settings.migration\": \"true\"\r\n  },\r\n  \"keyToStringList\": {\r\n    \"vue.recent.templates\": [\r\n      \"Vue Composition API Component\"\r\n    ]\r\n  }\r\n}]]></component>\r\n  <component name=\"RecentsManager\">\r\n    <key name=\"CopyFile.RECENT_KEYS\">\r\n      <recent name=\"C:\\Users\\Doge\\Desktop\\BS\\Birdhaven\\Birdhaven\\src\\assets\\art\" />\r\n      <recent name=\"C:\\Users\\Doge\\Desktop\\BS\\Birdhaven\\Birdhaven\\src\\assets\\comic\\chapter6\" />\r\n      <recent name=\"C:\\Users\\Doge\\Desktop\\BS\\Birdhaven\\Birdhaven\\src\\assets\\comic\\chapter5\" />\r\n      <recent name=\"C:\\Users\\Doge\\Desktop\\BS\\Birdhaven\\Birdhaven\\src\\assets\\comic\\chapter4\" />\r\n      <recent name=\"C:\\Users\\Doge\\Desktop\\BS\\Birdhaven\\Birdhaven\\src\\assets\\comic\\chapter3\" />\r\n    </key>\r\n    <key name=\"MoveFile.RECENT_KEYS\">\r\n      <recent name=\"C:\\Users\\Doge\\Desktop\\BS\\Birdhaven\\Birdhaven\\backend\" />\r\n      <recent name=\"C:\\Users\\Doge\\Desktop\\BS\\Birdhaven\\Birdhaven\\frontend\" />\r\n      <recent name=\"C:\\Users\\Doge\\Desktop\\BS\\Birdhaven\\Birdhaven\\src\\assets\\comic\\chapter6\" />\r\n      <recent name=\"C:\\Users\\Doge\\Desktop\\BS\\Birdhaven\\Birdhaven\\src\\assets\\comic\\chapter5\" />\r\n      <recent name=\"C:\\Users\\Doge\\Desktop\\BS\\Birdhaven\\Birdhaven\\src\\assets\" />\r\n    </key>\r\n  </component>\r\n  <component name=\"SharedIndexes\">\r\n    <attachedChunks>\r\n      <set>\r\n        <option value=\"bundled-jdk-9823dce3aa75-fbdcb00ec9e3-intellij.indexing.shared.core-IU-251.25410.129\" />\r\n        <option value=\"bundled-js-predefined-d6986cc7102b-6a121458b545-JavaScript-IU-251.25410.129\" />\r\n      </set>\r\n    </attachedChunks>\r\n  </component>\r\n  <component name=\"TaskManager\">\r\n    <task active=\"true\" id=\"Default\" summary=\"Default task\">\r\n      <changelist id=\"4f7031e2-13e3-4faf-a87f-e8d670573ed8\" name=\"Changes\" comment=\"\" />\r\n      <created>1774914959475</created>\r\n      <option name=\"number\" value=\"Default\" />\r\n      <option name=\"presentableId\" value=\"Default\" />\r\n      <updated>1774914959475</updated>\r\n      <workItem from=\"1774914960527\" duration=\"88000\" />\r\n      <workItem from=\"1774969623313\" duration=\"607000\" />\r\n      <workItem from=\"1775050246451\" duration=\"581000\" />\r\n      <workItem from=\"1775138535662\" duration=\"26605000\" />\r\n      <workItem from=\"1775226426450\" duration=\"10445000\" />\r\n      <workItem from=\"1775324012249\" duration=\"6531000\" />\r\n      <workItem from=\"1775403411590\" duration=\"9733000\" />\r\n    </task>\r\n    <servers />\r\n  </component>\r\n  <component name=\"TypeScriptGeneratedFilesManager\">\r\n    <option name=\"version\" value=\"3\" />\r\n  </component>\r\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/workspace.xml b/.idea/workspace.xml
+--- a/.idea/workspace.xml	(revision 4307eaaf9e095e0774b61088b22818ed2e381d67)
++++ b/.idea/workspace.xml	(date 1775417601016)
+@@ -4,7 +4,7 @@
+     <option name="autoReloadType" value="SELECTIVE" />
+   </component>
+   <component name="ChangeListManager">
+-    <list default="true" id="4f7031e2-13e3-4faf-a87f-e8d670573ed8" name="Changes" comment="" />
++    <list default="true" id="4f7031e2-13e3-4faf-a87f-e8d670573ed8" name="Changes" comment="Initial Commit" />
+     <option name="SHOW_DIALOG" value="false" />
+     <option name="HIGHLIGHT_CONFLICTS" value="true" />
+     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+@@ -19,6 +19,10 @@
+   </component>
+   <component name="Git.Settings">
+     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
++    <option name="UPDATE_TYPE" value="REBASE" />
++  </component>
++  <component name="GitRewordedCommitMessages">
++    <option name="onto" value="93303281578f67ffb2f1de89f01461cf413cf92a" />
+   </component>
+   <component name="KubernetesApiPersistence">{}</component>
+   <component name="KubernetesApiProvider">{
+@@ -32,26 +36,26 @@
+     <option name="hideEmptyMiddlePackages" value="true" />
+     <option name="showLibraryContents" value="true" />
+   </component>
+-  <component name="PropertiesComponent"><![CDATA[{
+-  "keyToString": {
+-    "ModuleVcsDetector.initialDetectionPerformed": "true",
+-    "RunOnceActivity.ShowReadmeOnStart": "true",
+-    "git-widget-placeholder": "master",
+-    "last_opened_file_path": "C:/Users/Doge/Desktop/BS/Birdhaven/Birdhaven/src/assets/art",
+-    "node.js.detected.package.eslint": "true",
+-    "node.js.detected.package.tslint": "true",
+-    "node.js.selected.package.eslint": "(autodetect)",
+-    "node.js.selected.package.tslint": "(autodetect)",
+-    "nodejs_package_manager_path": "npm",
+-    "ts.external.directory.path": "C:\\Program Files\\JetBrains\\IntelliJ IDEA 2025.1.1.1\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external",
+-    "vue.rearranger.settings.migration": "true"
++  <component name="PropertiesComponent">{
++  &quot;keyToString&quot;: {
++    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
++    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
++    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
++    &quot;last_opened_file_path&quot;: &quot;C:/Users/Doge/Desktop/BS/Birdhaven/Birdhaven/src/assets/art&quot;,
++    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
++    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
++    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
++    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
++    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
++    &quot;ts.external.directory.path&quot;: &quot;C:\\Program Files\\JetBrains\\IntelliJ IDEA 2025.1.1.1\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external&quot;,
++    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+   },
+-  "keyToStringList": {
+-    "vue.recent.templates": [
+-      "Vue Composition API Component"
++  &quot;keyToStringList&quot;: {
++    &quot;vue.recent.templates&quot;: [
++      &quot;Vue Composition API Component&quot;
+     ]
+   }
+-}]]></component>
++}</component>
+   <component name="RecentsManager">
+     <key name="CopyFile.RECENT_KEYS">
+       <recent name="C:\Users\Doge\Desktop\BS\Birdhaven\Birdhaven\src\assets\art" />
+@@ -91,9 +95,22 @@
+       <workItem from="1775324012249" duration="6531000" />
+       <workItem from="1775403411590" duration="9733000" />
+     </task>
++    <task id="LOCAL-00001" summary="Initial Commit">
++      <option name="closed" value="true" />
++      <created>1775417337479</created>
++      <option name="number" value="00001" />
++      <option name="presentableId" value="LOCAL-00001" />
++      <option name="project" value="LOCAL" />
++      <updated>1775417337479</updated>
++    </task>
++    <option name="localTasksCounter" value="2" />
+     <servers />
+   </component>
+   <component name="TypeScriptGeneratedFilesManager">
+     <option name="version" value="3" />
+   </component>
++  <component name="VcsManagerConfiguration">
++    <MESSAGE value="Initial Commit" />
++    <option name="LAST_COMMIT_MESSAGE" value="Initial Commit" />
++  </component>
+ </project>
+\ No newline at end of file
