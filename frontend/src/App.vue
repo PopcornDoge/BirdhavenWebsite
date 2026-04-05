@@ -1,0 +1,111 @@
+<template>
+  <div class="site-shell" :data-theme="theme">
+    <SiteHeader
+        :theme="theme"
+        @toggle-theme="toggleTheme"
+    />
+
+    <main>
+      <router-view />
+    </main>
+
+    <SiteFooter />
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted, watch } from "vue"
+import SiteHeader from "./components/SiteHeader.vue"
+import SiteFooter from "./components/SiteFooter.vue"
+
+const theme = ref("dark")
+
+onMounted(() => {
+  const savedTheme = localStorage.getItem("theme")
+  if (savedTheme === "light" || savedTheme === "dark") {
+    theme.value = savedTheme
+  }
+})
+
+watch(theme, (newTheme) => {
+  localStorage.setItem("theme", newTheme)
+})
+
+const toggleTheme = () => {
+  theme.value = theme.value === "dark" ? "light" : "dark"
+}
+</script>
+
+<style scoped>
+:global(*) {
+  box-sizing: border-box;
+}
+
+:global(html) {
+  scroll-behavior: smooth;
+}
+
+:global(body) {
+  margin: 0;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+:global(a) {
+  color: inherit;
+  text-decoration: none;
+}
+
+.site-shell {
+  min-height: 100vh;
+  background: var(--bg-page);
+  color: var(--text-main);
+  transition: background 0.35s ease, color 0.35s ease;
+}
+
+.site-shell[data-theme="dark"] {
+  --bg-page: #111827;
+  --text-h: var(--text-main);
+  --text-main: #f8fafc;
+  --text-muted: rgba(248, 250, 252, 0.75);
+  --text-soft: rgba(248, 250, 252, 0.5);
+
+  --surface: rgba(255, 255, 255, 0.05);
+  --surface-hover: rgba(255, 255, 255, 0.1);
+  --surface-strong: rgba(0, 0, 0, 0.5);
+
+  --border: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.2);
+
+  --button-primary-bg: #f8fafc;
+  --button-primary-text: #111827;
+  --button-secondary-text: #f8fafc;
+
+  --header-bg: rgba(0, 0, 0, 0.5);
+  --header-button-bg: rgba(0, 0, 0, 0.3);
+}
+
+.site-shell[data-theme="light"] {
+  --bg-page: #f8fafc;
+
+  --text-h: var(--text-main);
+  --text-main: #111827;
+
+  /* 👇 make these darker */
+  --text-muted: rgba(17, 24, 39, 0.85);
+  --text-soft: rgba(17, 24, 39, 0.7);
+
+  --surface: rgba(230, 230, 230, 0.7);
+  --surface-hover: rgba(230, 230, 230, 0.9);
+  --surface-strong: rgba(230, 230, 230, 0.75);
+
+  --border: rgba(15, 23, 42, 0.08);
+  --border-strong: rgba(15, 23, 42, 0.12);
+
+  --button-primary-bg: #111827;
+  --button-primary-text: #ffffff;
+  --button-secondary-text: #111827;
+
+  --header-bg: rgba(255, 255, 255, 0.75);
+  --header-button-bg: rgba(255, 255, 255, 0.8);
+}
+</style>
