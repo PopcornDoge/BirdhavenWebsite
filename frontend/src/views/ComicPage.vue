@@ -138,6 +138,7 @@ const comicPages = computed(() => {
       }))
       .sort((a, b) => a.name.localeCompare(b.name, undefined, {numeric: true}))
 
+
   return pages.slice(1)
 })
 
