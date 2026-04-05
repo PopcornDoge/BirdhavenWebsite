@@ -6,17 +6,29 @@
     />
 
     <main>
-      <router-view />
+      <router-view/>
     </main>
 
-    <SiteFooter />
+    <SiteFooter/>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from "vue"
+
+import { supabase } from './lib/supabase.js'
+
+onMounted(async () => {
+  const { data, error } = await supabase.from('art').select('*')
+
+  console.log('DATA:', data)
+  console.log('ERROR:', error)
+})
 import SiteHeader from "./components/SiteHeader.vue"
 import SiteFooter from "./components/SiteFooter.vue"
+
+import { ref, onMounted, watch } from "vue"
+
+const todos = ref([])
 
 const theme = ref("dark")
 
@@ -85,7 +97,7 @@ const toggleTheme = () => {
 }
 
 .site-shell[data-theme="light"] {
-  --bg-page: #f8fafc;
+  --bg-page: #FFF2E4;
 
   --text-h: var(--text-main);
   --text-main: #111827;
@@ -105,7 +117,7 @@ const toggleTheme = () => {
   --button-primary-text: #ffffff;
   --button-secondary-text: #111827;
 
-  --header-bg: rgba(255, 255, 255, 0.75);
+  --header-bg: rgba(224, 209, 193, 0.75);
   --header-button-bg: rgba(255, 255, 255, 0.8);
 }
 </style>

@@ -64,11 +64,17 @@
         </Transition>
       </div>
 
-      <div v-if="isLoading" class="empty-state mx-auto max-w-xl rounded-2xl border p-8 text-center">
+      <div
+          v-if="isLoading"
+          class="empty-state mx-auto max-w-xl rounded-2xl border p-8 text-center"
+      >
         Loading art...
       </div>
 
-      <div v-else-if="loadError" class="empty-state mx-auto max-w-xl rounded-2xl border p-8 text-center">
+      <div
+          v-else-if="loadError"
+          class="empty-state mx-auto max-w-xl rounded-2xl border p-8 text-center"
+      >
         {{ loadError }}
       </div>
 
@@ -78,7 +84,7 @@
       >
         <div
             v-for="(piece, index) in filteredArtPieces"
-            :key="piece.id || piece.imageUrl || piece.src"
+            :key="piece.id"
             class="break-inside-avoid"
         >
           <button
@@ -160,6 +166,7 @@
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { supabase } from '../lib/supabase.js'
 
 const artPieces = ref([])
 const isLoading = ref(true)
@@ -170,29 +177,31 @@ const selectedTag = ref('all')
 const isLightboxOpen = ref(false)
 const currentIndex = ref(0)
 
-const API_BASE = 'http://localhost:4000'
+const getPublicImageUrl = (imagePath) => {
+  const { data } = supabase.storage.from('art').getPublicUrl(imagePath)
+  return data?.publicUrl || ''
+}
 
 const loadArt = async () => {
   isLoading.value = true
   loadError.value = ''
 
   try {
-    const response = await fetch(`${API_BASE}/api/art`)
+    const { data, error } = await supabase
+        .from('art')
+        .select('*')
+        .eq('published', true)
+        .order('created_at', { ascending: false })
 
-    if (!response.ok) {
-      throw new Error('Failed to load art.')
+    if (error) {
+      console.error('loadArt error:', error)
+      throw error
     }
 
-    const data = await response.json()
-
-    artPieces.value = data
-        .filter((piece) => piece.published)
-        .map((piece) => ({
-          ...piece,
-          imageUrl: piece.imageUrl?.startsWith('http')
-              ? piece.imageUrl
-              : `${API_BASE}${piece.imageUrl}`,
-        }))
+    artPieces.value = (data || []).map((piece) => ({
+      ...piece,
+      imageUrl: getPublicImageUrl(piece.image_path),
+    }))
   } catch (error) {
     loadError.value = 'Unable to load gallery right now.'
     artPieces.value = []
@@ -242,7 +251,7 @@ const currentImage = computed(() => {
   return filteredArtPieces.value[currentIndex.value] || {
     imageUrl: '',
     title: '',
-    file: '',
+    image_path: '',
     tags: [],
   }
 })

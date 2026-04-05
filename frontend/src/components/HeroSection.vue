@@ -12,7 +12,7 @@
         Voxer Elafiel is the only elf left alive in his world, with monster attacks increasing and the military having him in their sight he begins his search for answers that lead him to more than he could have ever imagined.
       </p>
 
-      <div class="hero-actions justify-center md:justify-start max-w-xl mx-auto md:mx-0">
+      <div class="hero-actions justify-center md:justify-start max-w-xl mx-auto md:mx-0 mb-5">
         <router-link
             class="primary-btn"
             :to="`/read/${latestChapter}`"
@@ -23,7 +23,10 @@
       </div>
     </div>
 
-    <HeroCarousel />
+    <div class="hero-art">
+      <HeroCarousel />
+    </div>
+
 
   </section>
 </template>
@@ -95,6 +98,7 @@ const latestChapter = computed(() => {
   .hero-section {
     grid-template-columns: 1fr;
     text-align: center;
+    padding-top: 6.5rem;
   }
 
   .hero-actions {

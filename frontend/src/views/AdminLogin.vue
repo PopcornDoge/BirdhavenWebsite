@@ -49,8 +49,9 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { supabase } from '../lib/supabase.js'
 
 const router = useRouter()
 
@@ -59,33 +60,37 @@ const password = ref('')
 const errorMessage = ref('')
 const isLoading = ref(false)
 
+onMounted(async () => {
+  const { data, error } = await supabase.auth.getUser()
+
+  if (!error && data?.user) {
+    await router.push('/admin')
+  }
+})
+
 const handleLogin = async () => {
   errorMessage.value = ''
   isLoading.value = true
 
   try {
-    const response = await fetch('http://localhost:4000/api/auth/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify({
-        email: email.value,
-        password: password.value,
-      }),
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.value,
+      password: password.value,
     })
 
-    const data = await response.json()
+    if (error) {
+      errorMessage.value = error.message || 'Login failed'
+      return
+    }
 
-    if (!response.ok) {
-      errorMessage.value = data.message || 'Login failed'
+    if (!data?.user) {
+      errorMessage.value = 'Login failed'
       return
     }
 
     await router.push('/admin')
   } catch (error) {
-    errorMessage.value = 'Unable to reach the server'
+    errorMessage.value = 'Unable to reach Supabase'
   } finally {
     isLoading.value = false
   }

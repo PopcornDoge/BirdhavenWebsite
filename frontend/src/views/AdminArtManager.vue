@@ -1,15 +1,18 @@
 <template>
   <main class="min-h-screen px-6 py-28">
     <div class="mx-auto max-w-6xl space-y-10">
-      <div class="flex items-center justify-between gap-4">
-        <div>
+      <div class="relative flex items-center justify-center">
+        <div class="text-center">
           <h1 class="page-title text-4xl font-bold">Art Manager</h1>
           <p class="page-text mt-2">
             Upload new art, add tags, and edit existing entries.
           </p>
         </div>
 
-        <router-link to="/admin" class="back-btn">
+        <router-link
+            to="/admin"
+            class="back-btn absolute right-0"
+        >
           Back to Admin
         </router-link>
       </div>
@@ -25,10 +28,23 @@
         <form class="grid gap-5 md:grid-cols-2" @submit.prevent="handleUpload">
           <div class="md:col-span-2">
             <label class="form-label">Image File</label>
+
+            <div class="file-picker-row">
+              <label for="art-file-input" class="file-picker-btn">
+                Choose File
+              </label>
+
+              <span class="file-picker-name">
+                {{ selectedFileName || 'No file selected' }}
+              </span>
+            </div>
+
             <input
+                id="art-file-input"
+                ref="fileInputRef"
                 type="file"
                 accept="image/png,image/jpeg,image/webp"
-                class="form-input form-file"
+                class="sr-only"
                 @change="handleFileChange"
                 required
             />
@@ -75,7 +91,7 @@
 
           <div class="md:col-span-2 flex items-center gap-3">
             <label class="inline-flex items-center gap-2">
-              <input v-model="newArt.published" type="checkbox" />
+              <input v-model="newArt.published" type="checkbox"/>
               <span class="page-text">Published</span>
             </label>
           </div>
@@ -129,7 +145,7 @@
                 class="art-card"
             >
               <img
-                  :src="piece.src || piece.imageUrl"
+                  :src="piece.imageUrl"
                   :alt="piece.title"
                   class="art-thumb"
               />
@@ -140,8 +156,18 @@
                     {{ piece.title }}
                   </h3>
                   <p class="card-subtitle text-sm">
-                    {{ piece.file || piece.imageUrl }}
+                    {{ piece.image_path }}
                   </p>
+                </div>
+
+                <div>
+                  <label class="form-label">Edit Title</label>
+                  <input
+                      v-model="piece.title"
+                      type="text"
+                      class="form-input"
+                      placeholder="Image title"
+                  />
                 </div>
 
                 <div>
@@ -174,7 +200,7 @@
 
                 <div class="flex items-center justify-between gap-3">
                   <label class="inline-flex items-center gap-2">
-                    <input v-model="piece.published" type="checkbox" />
+                    <input v-model="piece.published" type="checkbox"/>
                     <span class="page-text">Published</span>
                   </label>
 
@@ -192,8 +218,9 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import {computed, onMounted, reactive, ref} from 'vue'
+import {useRouter} from 'vue-router'
+import {supabase} from '../lib/supabase.js'
 
 const router = useRouter()
 
@@ -203,6 +230,8 @@ const uploadError = ref('')
 const isLoadingArt = ref(true)
 const tagInput = ref('')
 const selectedFile = ref(null)
+const selectedFileName = ref('')
+const fileInputRef = ref(null)
 const artSearch = ref('')
 
 const newArt = reactive({
@@ -214,6 +243,18 @@ const newArt = reactive({
 
 const artPieces = ref([])
 
+const getPublicImageUrl = (imagePath) => {
+  const {data} = supabase.storage.from('art').getPublicUrl(imagePath)
+  return data?.publicUrl || ''
+}
+
+const sanitizeFileName = (name) => {
+  return name
+      .normalize('NFKD')
+      .replace(/[^\w.\-]+/g, '-')
+      .replace(/-+/g, '-')
+}
+
 const filteredAdminArtPieces = computed(() => {
   const query = artSearch.value.trim().toLowerCase()
 
@@ -223,62 +264,46 @@ const filteredAdminArtPieces = computed(() => {
 
   return artPieces.value.filter((piece) => {
     const titleMatch = piece.title?.toLowerCase().includes(query)
-    const fileMatch = piece.file?.toLowerCase().includes(query)
+    const fileMatch = piece.image_path?.toLowerCase().includes(query)
     const imageUrlMatch = piece.imageUrl?.toLowerCase().includes(query)
+    const altMatch = piece.alt?.toLowerCase().includes(query)
     const tagMatch = (piece.tags || []).some((tag) =>
         tag.toLowerCase().includes(query)
     )
 
-    return titleMatch || fileMatch || imageUrlMatch || tagMatch
+    return titleMatch || fileMatch || imageUrlMatch || altMatch || tagMatch
   })
 })
-
-const ensureAuthenticated = async () => {
-  const response = await fetch('http://localhost:4000/api/auth/me', {
-    credentials: 'include',
-  })
-
-  if (!response.ok) {
-    await router.push('/admin/login')
-    return false
-  }
-
-  return true
-}
-
-const API_BASE = 'http://localhost:4000'
 
 const loadArt = async () => {
   isLoadingArt.value = true
 
   try {
-    const response = await fetch(`${API_BASE}/api/art`, {
-      credentials: 'include',
-    })
+    const {data, error} = await supabase
+        .from('art')
+        .select('*')
+        .order('created_at', {ascending: false})
 
-    if (!response.ok) {
+    if (error) {
+      console.error('loadArt error:', error)
       artPieces.value = []
       return
     }
 
-    const data = await response.json()
-
-    artPieces.value = data.map((piece) => ({
+    artPieces.value = (data || []).map((piece) => ({
       ...piece,
-      imageUrl: piece.imageUrl?.startsWith('http')
-        ? piece.imageUrl
-        : `${API_BASE}${piece.imageUrl}`,
+      imageUrl: getPublicImageUrl(piece.image_path),
       newTag: '',
     }))
-  } catch {
-    artPieces.value = []
   } finally {
     isLoadingArt.value = false
   }
 }
 
 const handleFileChange = (event) => {
-  selectedFile.value = event.target.files?.[0] || null
+  const file = event.target.files?.[0] || null
+  selectedFile.value = file
+  selectedFileName.value = file?.name || ''
 }
 
 const addTag = () => {
@@ -290,16 +315,22 @@ const addTag = () => {
 }
 
 const removeTag = (tagToRemove) => {
-  newArt.tags = newArt.tags.filter((tag) => tag !== tagToRemove)
+  const nextTags = newArt.tags.filter((tag) => tag !== tagToRemove)
+  newArt.tags.splice(0, newArt.tags.length, ...nextTags)
 }
 
 const resetNewArtForm = () => {
   newArt.title = ''
   newArt.alt = ''
-  newArt.tags = []
+  newArt.tags.splice(0, newArt.tags.length)
   newArt.published = true
   tagInput.value = ''
   selectedFile.value = null
+  selectedFileName.value = ''
+
+  if (fileInputRef.value) {
+    fileInputRef.value.value = ''
+  }
 }
 
 const handleUpload = async () => {
@@ -314,31 +345,48 @@ const handleUpload = async () => {
   isUploading.value = true
 
   try {
-    const formData = new FormData()
-    formData.append('image', selectedFile.value)
-    formData.append('title', newArt.title)
-    formData.append('alt', newArt.title)
-    formData.append('tags', JSON.stringify(newArt.tags))
-    formData.append('published', String(newArt.published))
+    const file = selectedFile.value
+    const safeName = sanitizeFileName(file.name)
+    const fileName = `${Date.now()}-${safeName}`
 
-    const response = await fetch('http://localhost:4000/api/art', {
-      method: 'POST',
-      credentials: 'include',
-      body: formData,
-    })
+    const {data: uploadData, error: uploadErr} = await supabase.storage
+        .from('art')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: file.type || 'application/octet-stream',
+        })
 
-    const data = await response.json()
+    if (uploadErr) {
+      console.error('upload error:', uploadErr)
+      uploadError.value = uploadErr.message
+      return
+    }
 
-    if (!response.ok) {
-      uploadError.value = data.message || 'Upload failed.'
+    const {error: insertErr} = await supabase
+        .from('art')
+        .insert([
+          {
+            title: newArt.title.trim(),
+            alt: (newArt.alt || newArt.title).trim(),
+            image_path: uploadData.path,
+            tags: newArt.tags,
+            published: newArt.published,
+          },
+        ])
+
+    if (insertErr) {
+      console.error('insert error:', insertErr)
+      uploadError.value = insertErr.message
       return
     }
 
     uploadMessage.value = 'Art uploaded successfully.'
     resetNewArtForm()
     await loadArt()
-  } catch {
-    uploadError.value = 'Unable to reach the server.'
+  } catch (error) {
+    console.error('handleUpload error:', error)
+    uploadError.value = error?.message || 'Unable to upload to Supabase.'
   } finally {
     isUploading.value = false
   }
@@ -357,32 +405,23 @@ const removeExistingTag = (piece, tagToRemove) => {
 }
 
 const saveExistingPiece = async (piece) => {
-  try {
-    const response = await fetch(`http://localhost:4000/api/art/${piece.id}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify({
-        title: piece.title,
-        alt: piece.title,
+  const {error} = await supabase
+      .from('art')
+      .update({
+        title: piece.title.trim(),
+        alt: (piece.alt || piece.title).trim(),
         tags: piece.tags,
         published: piece.published,
-      }),
-    })
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', piece.id)
 
-    if (!response.ok) {
-      return
-    }
-  } catch {
+  if (error) {
+    console.error('saveExistingPiece error:', error)
   }
 }
 
 onMounted(async () => {
-  const ok = await ensureAuthenticated()
-  if (!ok) return
-
   await loadArt()
 })
 </script>
@@ -425,6 +464,37 @@ onMounted(async () => {
 
 .form-file {
   padding: 0.7rem 1rem;
+}
+
+.file-picker-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* centers horizontally */
+  gap: 0.5rem;
+}
+
+.file-picker-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-strong);
+  background: var(--button-primary-bg);
+  color: var(--button-primary-text);
+  border-radius: 999px;
+  padding: 0.8rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.file-picker-btn:hover {
+  transform: translateY(-1px);
+}
+
+.file-picker-name {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  word-break: break-word;
 }
 
 .search-input {

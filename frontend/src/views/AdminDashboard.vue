@@ -2,19 +2,30 @@
   <main class="min-h-screen px-6 py-28">
     <div class="mx-auto max-w-4xl">
       <h1 class="page-title text-4xl font-bold">Admin Dashboard</h1>
-      <p class="page-text mt-4">
-        Signed in as {{ user?.email }}
+
+      <p v-if="isLoading" class="page-text mt-4">
+        Checking session...
       </p>
 
-      <div class="mt-8 flex flex-wrap gap-4">
-        <router-link to="/admin/art" class="admin-btn">
-          Manage Art
-        </router-link>
+      <p v-else-if="errorMessage" class="error-text mt-4">
+        {{ errorMessage }}
+      </p>
 
-        <button class="admin-btn" @click="handleLogout">
-          Logout
-        </button>
-      </div>
+      <template v-else>
+        <p class="page-text mt-4">
+          Signed in as {{ user?.email }}
+        </p>
+
+        <div class="mt-8 flex flex-wrap gap-4">
+          <router-link to="/admin/art" class="admin-btn">
+            Manage Art
+          </router-link>
+
+          <button class="admin-btn" @click="handleLogout">
+            Logout
+          </button>
+        </div>
+      </template>
     </div>
   </main>
 </template>
@@ -22,29 +33,37 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { supabase } from '../lib/supabase.js'
 
 const router = useRouter()
 const user = ref(null)
+const isLoading = ref(true)
+const errorMessage = ref('')
 
 onMounted(async () => {
-  const response = await fetch('http://localhost:4000/api/auth/me', {
-    credentials: 'include',
-  })
+  try {
+    const { data, error } = await supabase.auth.getUser()
 
-  if (!response.ok) {
-    await router.push('/admin/login')
-    return
+    if (error || !data?.user) {
+      await router.push('/admin/login')
+      return
+    }
+
+    user.value = data.user
+  } catch (error) {
+    errorMessage.value = 'Unable to verify session.'
+  } finally {
+    isLoading.value = false
   }
-
-  const data = await response.json()
-  user.value = data.user
 })
 
 const handleLogout = async () => {
-  await fetch('http://localhost:4000/api/auth/logout', {
-    method: 'POST',
-    credentials: 'include',
-  })
+  const { error } = await supabase.auth.signOut()
+
+  if (error) {
+    errorMessage.value = error.message
+    return
+  }
 
   await router.push('/admin/login')
 }
@@ -57,6 +76,10 @@ const handleLogout = async () => {
 
 .page-text {
   color: var(--text-muted);
+}
+
+.error-text {
+  color: #dc2626;
 }
 
 .admin-btn {
