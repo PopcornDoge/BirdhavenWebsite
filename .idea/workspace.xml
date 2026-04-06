@@ -114,7 +114,7 @@
       <option name="presentableId" value="Default" />
       <updated>1775423168740</updated>
       <workItem from="1775423169830" duration="16712000" />
-      <workItem from="1775485360139" duration="138000" />
+      <workItem from="1775485360139" duration="192000" />
     </task>
     <task id="LOCAL-00002" summary="Initial Commit">
       <option name="closed" value="true" />
@@ -196,7 +196,15 @@
       <option name="project" value="LOCAL" />
       <updated>1775485451751</updated>
     </task>
-    <option name="localTasksCounter" value="12" />
+    <task id="LOCAL-00012" summary="Changed default to light mode">
+      <option name="closed" value="true" />
+      <created>1775485505109</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1775485505109</updated>
+    </task>
+    <option name="localTasksCounter" value="13" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
