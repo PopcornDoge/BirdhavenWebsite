@@ -10,7 +10,8 @@
       </div>
 
       <p class="hero-text text-center max-w-xl mx-auto">
-        Voxer Elafiel is the only elf left alive in his world, with monster attacks increasing and the military having him in their sight he begins his search for answers that lead him to more than he could have ever imagined.
+        Voxer Elafiel is the only elf left alive in his world, with monster attacks increasing and the military having
+        him in their sight he begins his search for answers that lead him to more than he could have ever imagined.
       </p>
 
       <div class="hero-actions justify-center md:justify-start max-w-xl mx-auto md:mx-0 mb-5">
@@ -37,15 +38,15 @@
     </div>
 
     <div class="hero-art">
-      <HeroCarousel />
+      <HeroCarousel/>
     </div>
   </section>
 </template>
 
 <script setup>
 import HeroCarousel from "./HeroCarousel.vue"
-import { computed, onMounted, ref } from "vue"
-import { supabase } from "../lib/supabase.js"
+import {computed, onMounted, ref} from "vue"
+import {supabase} from "../lib/supabase.js"
 
 const chapters = ref([])
 
@@ -66,11 +67,11 @@ const latestChapter = computed(() => {
 })
 
 const loadChapters = async () => {
-  const { data, error } = await supabase
+  const {data, error} = await supabase
       .from("chapters")
       .select("*")
       .eq("published", true)
-      .order("created_at", { ascending: true })
+      .order("created_at", {ascending: true})
 
   if (error) {
     console.error("loadChapters error:", error)
@@ -91,8 +92,27 @@ onMounted(async () => {
   width: 100%;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1.1fr 0.9fr;
   align-items: center;
+  gap: 2rem;
+}
+
+.hero-art {
+  width: 100%;
+  max-width: 50rem;
+  justify-self: end;
+  margin-left: auto;
+}
+
+.hero-copy {
+  width: 100%;
+  max-width: clamp(32rem, 40vw, 56rem); /* 👈 scales with screen */
+  margin: 0 auto;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
 .hero-text {
@@ -104,6 +124,7 @@ onMounted(async () => {
   gap: 1rem;
   margin-top: 1.5rem;
   flex-wrap: wrap;
+  justify-content: center;
 }
 
 .primary-btn,
@@ -111,7 +132,7 @@ onMounted(async () => {
   padding: 0.75rem 1.25rem;
   border-radius: 999px;
   font-weight: 600;
-  transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  transition: transform 0.2s ease, background 0.2s ease;
 }
 
 .primary-btn {
@@ -136,6 +157,57 @@ onMounted(async () => {
     grid-template-columns: 1fr;
     text-align: center;
     padding-top: 6.5rem;
+    gap: 2rem;
+  }
+
+  .hero-art {
+    max-width: 20rem;
+    margin-left: auto;
+    margin-right: auto;
+    justify-self: center;
+  }
+
+  .hero-actions {
+    justify-content: center;
+  }
+}
+
+.primary-btn,
+.secondary-btn {
+  padding: 0.75rem 1.25rem;
+  border-radius: 999px;
+  font-weight: 600;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.primary-btn {
+  background: var(--button-primary-bg);
+  color: var(--button-primary-text);
+}
+
+.secondary-btn {
+  color: var(--button-secondary-text);
+  border: 1px solid var(--border-strong);
+  background: transparent;
+}
+
+.primary-btn:hover,
+.secondary-btn:hover {
+  transform: translateY(-2px);
+  background: var(--surface-hover);
+}
+
+@media (max-width: 800px) {
+  .hero-section {
+    grid-template-columns: 1fr;
+    text-align: center;
+    padding-top: 6.5rem;
+    gap: 2rem;
+  }
+
+  .hero-art {
+    max-width: 20rem;
+    margin: 0 auto;
   }
 
   .hero-actions {
