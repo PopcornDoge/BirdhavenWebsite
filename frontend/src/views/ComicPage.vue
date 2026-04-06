@@ -10,20 +10,28 @@
         </h1>
       </div>
 
-      <div class="flex flex-col gap-8">
+      <div v-if="isLoading" class="mx-auto max-w-5xl text-center">
+        <p class="chapter-label">Loading chapter...</p>
+      </div>
+
+      <div v-else-if="loadError" class="mx-auto max-w-5xl text-center">
+        <p class="chapter-label">{{ loadError }}</p>
+      </div>
+
+      <div v-else class="flex flex-col gap-8">
         <div
             v-for="(page, index) in comicPages"
-            :key="page.src"
+            :key="page.id"
             :ref="el => setPageRef(el, index)"
             class="page-frame transition-all duration-1000 ease-out"
             :class="[
-            visiblePages[index] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10',
+            visiblePages[index] !== false ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10',
             widePages[index] ? 'page-frame-wide' : 'page-frame-normal'
           ]"
         >
           <img
               :src="page.src"
-              :alt="page.name"
+              :alt="page.alt || page.name || chapterData.title"
               class="comic-image"
               loading="lazy"
               @load="handleImageLoad($event, index)"
@@ -31,7 +39,10 @@
         </div>
       </div>
 
-      <div class="chapter-nav mx-auto mt-12 flex max-w-5xl items-center justify-center gap-4">
+      <div
+          v-if="previousChapter || nextChapter"
+          class="chapter-nav mx-auto mt-12 flex max-w-5xl items-center justify-center gap-4"
+      >
         <router-link
             v-if="previousChapter"
             :to="previousChapter"
@@ -53,99 +64,84 @@
 </template>
 
 <script setup>
-import {computed, ref, watch, nextTick, onMounted, onBeforeUnmount} from 'vue'
-import {useRoute} from 'vue-router'
+import { computed, ref, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
+import { useRoute } from 'vue-router'
+import { supabase } from '../lib/supabase.js'
 
 const route = useRoute()
 
-const chapterMeta = {
-  chapter1: {
-    label: 'Chapter 1',
-    title: 'Voxer Elafiel',
-  },
-  chapter2: {
-    label: 'Chapter 2',
-    title: 'City of Birdhaven',
-  },
-  chapter3: {
-    label: 'Chapter 3',
-    title: 'Ochi Heiwa',
-  },
-  chapter4: {
-    label: 'Chapter 4',
-    title: 'The Bargain',
-  },
-  chapter5: {
-    label: 'Chapter 5',
-    title: 'A Revelation',
-  },
-  chapter6: {
-    label: 'Chapter 6',
-    title: 'The Gift',
-  },
-}
-
-const chapterOrder = [
-  '/read/chapter1',
-  '/read/chapter2',
-  '/read/chapter3',
-  '/read/chapter4',
-  '/read/chapter5',
-  '/read/chapter6',
-]
-
-const allImageModules = import.meta.glob(
-    '../assets/comic/chapter*/*.{png,jpg,jpeg,webp}',
-    {
-      eager: true,
-      import: 'default',
-    }
-)
-
-const currentChapter = computed(() => route.params.chapter || 'chapter1')
-
-const currentChapterPath = computed(() => `/read/${currentChapter.value}`)
-
-const currentChapterIndex = computed(() =>
-    chapterOrder.findIndex((chapter) => chapter === currentChapterPath.value)
-)
-
-const previousChapter = computed(() => {
-  const index = currentChapterIndex.value
-  return index > 0 ? chapterOrder[index - 1] : null
-})
-
-const nextChapter = computed(() => {
-  const index = currentChapterIndex.value
-  return index !== -1 && index < chapterOrder.length - 1
-      ? chapterOrder[index + 1]
-      : null
-})
-
-const chapterData = computed(() => {
-  return chapterMeta[currentChapter.value] || {
-    label: 'Unknown Chapter',
-    title: 'Untitled',
-  }
-})
-
-const comicPages = computed(() => {
-  const pages = Object.entries(allImageModules)
-      .filter(([path]) => path.includes(`/comic/${currentChapter.value}/`))
-      .map(([path, src]) => ({
-        src,
-        name: path.split('/').pop(),
-      }))
-      .sort((a, b) => a.name.localeCompare(b.name, undefined, {numeric: true}))
-
-
-  return pages.slice(1)
-})
+const isLoading = ref(true)
+const loadError = ref('')
+const chapters = ref([])
+const chapterRecord = ref(null)
+const comicPages = ref([])
 
 const visiblePages = ref([])
 const widePages = ref([])
 const pageRefs = ref([])
 let observer = null
+
+const normalizeSlug = (value) => String(value || '').trim().toLowerCase()
+
+const getPublicImageUrl = (imagePath) => {
+  const cleanPath = String(imagePath || '').replace(/^comics\//, '')
+  const { data } = supabase.storage.from('comics').getPublicUrl(cleanPath)
+  return data?.publicUrl || ''
+}
+
+const currentChapter = computed(() => normalizeSlug(route.params.chapter))
+
+const publishedChapters = computed(() => {
+  return [...chapters.value]
+      .filter((chapter) => chapter.published !== false)
+      .sort((a, b) => {
+        const aDate = new Date(a.created_at || 0).getTime()
+        const bDate = new Date(b.created_at || 0).getTime()
+        return aDate - bDate
+      })
+})
+
+const currentChapterIndex = computed(() => {
+  const currentSlug = chapterRecord.value?.slug
+      ? normalizeSlug(chapterRecord.value.slug)
+      : currentChapter.value
+
+  return publishedChapters.value.findIndex(
+      (chapter) => normalizeSlug(chapter.slug) === currentSlug
+  )
+})
+
+const previousChapter = computed(() => {
+  const index = currentChapterIndex.value
+  if (index > 0) {
+    return `/read/${publishedChapters.value[index - 1].slug}`
+  }
+  return null
+})
+
+const nextChapter = computed(() => {
+  const index = currentChapterIndex.value
+  if (index !== -1 && index < publishedChapters.value.length - 1) {
+    return `/read/${publishedChapters.value[index + 1].slug}`
+  }
+  return null
+})
+
+const chapterData = computed(() => {
+  const index = currentChapterIndex.value
+
+  if (!chapterRecord.value) {
+    return {
+      label: 'Unknown Chapter',
+      title: 'Untitled',
+    }
+  }
+
+  return {
+    label: index !== -1 ? `Chapter ${index + 1}` : 'Chapter',
+    title: chapterRecord.value.title || 'Untitled',
+  }
+})
 
 const setPageRef = (el, index) => {
   if (el) {
@@ -163,11 +159,15 @@ const setupObserver = async () => {
     observer.disconnect()
   }
 
-  visiblePages.value = comicPages.value.map(() => false)
-  widePages.value = comicPages.value.map(() => false)
   pageRefs.value = []
+  widePages.value = comicPages.value.map(() => false)
+  visiblePages.value = comicPages.value.map(() => true)
 
   await nextTick()
+
+  if (!('IntersectionObserver' in window)) {
+    return
+  }
 
   observer = new IntersectionObserver(
       (entries) => {
@@ -191,15 +191,87 @@ const setupObserver = async () => {
   })
 }
 
+const loadChapters = async () => {
+  const { data, error } = await supabase
+      .from('chapters')
+      .select('*')
+      .eq('published', true)
+      .order('created_at', { ascending: true })
+
+  if (error) {
+    throw error
+  }
+
+  chapters.value = data || []
+}
+
+const loadCurrentChapter = async () => {
+  const { data, error } = await supabase
+      .from('chapters')
+      .select('*')
+      .eq('slug', route.params.chapter)
+      .single()
+
+  if (error) {
+    throw error
+  }
+
+  chapterRecord.value = data
+}
+
+const loadPages = async () => {
+  if (!chapterRecord.value?.id) {
+    comicPages.value = []
+    return
+  }
+
+  const { data, error } = await supabase
+      .from('comic_pages')
+      .select('*')
+      .eq('chapter_id', chapterRecord.value.id)
+      .order('page_number', { ascending: true })
+
+  if (error) {
+    throw error
+  }
+
+  comicPages.value = (data || [])
+      .filter((page) => !page.is_cover)
+      .map((page) => ({
+        ...page,
+        src: getPublicImageUrl(page.image_path),
+        name: page.image_path?.split('/').pop() || '',
+      }))
+}
+
+const loadComicPage = async () => {
+  isLoading.value = true
+  loadError.value = ''
+
+  try {
+    await loadChapters()
+    await loadCurrentChapter()
+    await loadPages()
+    await setupObserver()
+  } catch (error) {
+    console.error('loadComicPage error:', error)
+    loadError.value = 'Unable to load this chapter right now.'
+    chapterRecord.value = null
+    comicPages.value = []
+  } finally {
+    isLoading.value = false
+  }
+}
+
 onMounted(async () => {
-  await setupObserver()
+  await loadComicPage()
 })
 
 watch(
     () => route.params.chapter,
     async () => {
-      window.scrollTo({top: 0, behavior: 'auto'})
-      await setupObserver()
+      window.scrollTo({ top: 0, behavior: 'auto' })
+      await loadComicPage()
     }
 )
 
@@ -256,6 +328,10 @@ onBeforeUnmount(() => {
   height: auto;
   object-fit: contain;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+}
+
+.chapter-nav {
+  min-height: 3.5rem;
 }
 
 .chapter-nav-btn {

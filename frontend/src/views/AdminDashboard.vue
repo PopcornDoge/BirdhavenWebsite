@@ -21,6 +21,10 @@
             Manage Art
           </router-link>
 
+          <router-link to="/admin/comics" class="admin-btn">
+            Upload Comic Chapter
+          </router-link>
+
           <button class="admin-btn" @click="handleLogout">
             Logout
           </button>

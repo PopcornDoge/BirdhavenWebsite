@@ -5,6 +5,7 @@
         <h1 class="page-title text-4xl font-bold md:text-5xl">
           Chapter Select
         </h1>
+
         <div class="view-toggle flex rounded-full border p-1 backdrop-blur-sm">
           <button
               class="toggle-button rounded-full px-4 py-2 text-sm font-medium transition"
@@ -24,22 +25,35 @@
         </div>
       </div>
 
+      <div v-if="isLoading" class="empty-state rounded-2xl border p-8 text-center">
+        Loading chapters...
+      </div>
+
+      <div v-else-if="loadError" class="empty-state rounded-2xl border p-8 text-center">
+        {{ loadError }}
+      </div>
+
       <div
-          v-if="viewMode === 'grid'"
+          v-else-if="viewMode === 'grid'"
           class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
       >
         <router-link
             v-for="chapter in chapters"
-            :key="chapter.slug"
+            :key="chapter.id"
             :to="`/read/${chapter.slug}`"
             class="chapter-card group overflow-hidden rounded-2xl border backdrop-blur-sm transition duration-300 hover:-translate-y-1"
         >
           <div class="aspect-[4/3] overflow-hidden">
             <img
+                v-if="chapter.cover"
                 :src="chapter.cover"
                 :alt="chapter.title"
                 class="h-full w-full object-contain transition duration-500 group-hover:scale-105"
             />
+
+            <div v-else class="thumbnail-box flex h-full w-full items-center justify-center">
+              <span class="chapter-label text-sm">No Cover</span>
+            </div>
           </div>
 
           <div class="p-5">
@@ -57,16 +71,21 @@
       <div v-else class="flex flex-col gap-1">
         <router-link
             v-for="chapter in chapters"
-            :key="chapter.slug"
+            :key="chapter.id"
             :to="`/read/${chapter.slug}`"
             class="chapter-card group flex items-center gap-4 rounded-2xl border p-2 backdrop-blur-sm transition duration-300 hover:-translate-y-1"
         >
           <div class="thumbnail-box h-10 w-10 shrink-0 overflow-hidden rounded-md">
             <img
+                v-if="chapter.cover"
                 :src="chapter.cover"
                 :alt="chapter.title"
                 class="h-full w-full object-contain transition duration-500 group-hover:scale-105"
             />
+
+            <div v-else class="flex h-full w-full items-center justify-center">
+              <span class="chapter-label text-[10px]">No Cover</span>
+            </div>
           </div>
 
           <div class="min-w-0 text-left">
@@ -85,53 +104,74 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
+import { supabase } from '../lib/supabase.js'
 
 const viewMode = ref('grid')
+const chapters = ref([])
+const isLoading = ref(true)
+const loadError = ref('')
 
-const chapterMeta = [
-  { slug: 'chapter1', label: 'Chapter 1', title: 'Voxer Elafiel' },
-  { slug: 'chapter2', label: 'Chapter 2', title: 'City of Birdhaven' },
-  { slug: 'chapter3', label: 'Chapter 3', title: 'Ochi Heiwa' },
-  { slug: 'chapter4', label: 'Chapter 4', title: 'The Bargain' },
-  { slug: 'chapter5', label: 'Chapter 5', title: 'A Revelation' },
-  { slug: 'chapter6', label: 'Chapter 6', title: 'The Gift' },
-]
+const getPublicImageUrl = (imagePath) => {
+  const cleanPath = String(imagePath || '').replace(/^comics\//, '')
+  const { data } = supabase.storage.from('comics').getPublicUrl(cleanPath)
+  return data?.publicUrl || ''
+}
 
-const imageModules = import.meta.glob(
-    '../assets/comic/chapter*/*.{png,jpg,jpeg,webp}',
-    {
-      eager: true,
-      import: 'default',
+const loadChapters = async () => {
+  isLoading.value = true
+  loadError.value = ''
+
+  try {
+    const { data: chapterRows, error: chapterError } = await supabase
+        .from('chapters')
+        .select('*')
+        .eq('published', true)
+        .order('created_at', { ascending: true })
+
+    if (chapterError) {
+      throw chapterError
     }
-)
 
-const chapterImages = Object.entries(imageModules).reduce((acc, [path, src]) => {
-  const match = path.match(/chapter\d+/)
-  if (!match) return acc
+    const chapterIds = (chapterRows || []).map((chapter) => chapter.id)
 
-  const chapterSlug = match[0]
+    let coverRows = []
 
-  if (!acc[chapterSlug]) {
-    acc[chapterSlug] = []
+    if (chapterIds.length) {
+      const { data, error } = await supabase
+          .from('comic_pages')
+          .select('chapter_id, image_path, is_cover, page_number')
+          .in('chapter_id', chapterIds)
+          .eq('is_cover', true)
+
+      if (error) {
+        throw error
+      }
+
+      coverRows = data || []
+    }
+
+    const coverMap = new Map(
+        coverRows.map((page) => [page.chapter_id, getPublicImageUrl(page.image_path)])
+    )
+
+    chapters.value = (chapterRows || []).map((chapter, index) => ({
+      ...chapter,
+      label: `Chapter ${index + 1}`,
+      cover: coverMap.get(chapter.id) || '',
+    }))
+  } catch (error) {
+    console.error('loadChapters error:', error)
+    loadError.value = 'Unable to load chapters right now.'
+    chapters.value = []
+  } finally {
+    isLoading.value = false
   }
+}
 
-  acc[chapterSlug].push({
-    src,
-    name: path.split('/').pop(),
-  })
-
-  return acc
-}, {})
-
-Object.values(chapterImages).forEach((images) => {
-  images.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }))
+onMounted(async () => {
+  await loadChapters()
 })
-
-const chapters = chapterMeta.map((chapter) => ({
-  ...chapter,
-  cover: chapterImages[chapter.slug]?.[0]?.src || '',
-}))
 </script>
 
 <style scoped>
@@ -176,5 +216,11 @@ const chapters = chapterMeta.map((chapter) => ({
 
 .thumbnail-box {
   background: var(--surface-strong);
+}
+
+.empty-state {
+  border-color: var(--border);
+  background: var(--surface);
+  color: var(--text-main);
 }
 </style>

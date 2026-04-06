@@ -8,44 +8,81 @@
             class="w-200 object-contain"
         />
       </div>
+
       <p class="hero-text text-center max-w-xl mx-auto">
         Voxer Elafiel is the only elf left alive in his world, with monster attacks increasing and the military having him in their sight he begins his search for answers that lead him to more than he could have ever imagined.
       </p>
 
       <div class="hero-actions justify-center md:justify-start max-w-xl mx-auto md:mx-0 mb-5">
         <router-link
+            v-if="latestChapter"
             class="primary-btn"
-            :to="`/read/${latestChapter}`"
+            :to="latestChapter"
         >
           Read Latest Chapter
         </router-link>
-        <a class="secondary-btn" href="/chapters">Chapter Select</a>
+
+        <router-link
+            v-else
+            class="primary-btn"
+            to="/chapters"
+        >
+          Read Latest Chapter
+        </router-link>
+
+        <router-link class="secondary-btn" to="/chapters">
+          Chapter Select
+        </router-link>
       </div>
     </div>
 
     <div class="hero-art">
       <HeroCarousel />
     </div>
-
-
   </section>
 </template>
 
 <script setup>
-import HeroCarousel from "./HeroCarousel.vue";
-import { computed } from 'vue'
+import HeroCarousel from "./HeroCarousel.vue"
+import { computed, onMounted, ref } from "vue"
+import { supabase } from "../lib/supabase.js"
 
-const chapterOrder = [
-  'chapter1',
-  'chapter2',
-  'chapter3',
-  'chapter4',
-  'chapter5',
-  'chapter6',
-]
+const chapters = ref([])
+
+const publishedChapters = computed(() => {
+  return [...chapters.value]
+      .filter((chapter) => chapter.published !== false)
+      .sort((a, b) => {
+        const aDate = new Date(a.created_at || 0).getTime()
+        const bDate = new Date(b.created_at || 0).getTime()
+        return aDate - bDate
+      })
+})
 
 const latestChapter = computed(() => {
-  return chapterOrder[chapterOrder.length - 1]
+  if (!publishedChapters.value.length) return null
+  const latest = publishedChapters.value[publishedChapters.value.length - 1]
+  return `/read/${latest.slug}`
+})
+
+const loadChapters = async () => {
+  const { data, error } = await supabase
+      .from("chapters")
+      .select("*")
+      .eq("published", true)
+      .order("created_at", { ascending: true })
+
+  if (error) {
+    console.error("loadChapters error:", error)
+    chapters.value = []
+    return
+  }
+
+  chapters.value = data || []
+}
+
+onMounted(async () => {
+  await loadChapters()
 })
 </script>
 

@@ -5,13 +5,78 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="4f7031e2-13e3-4faf-a87f-e8d670573ed8" name="Changes" comment="Initial Commit">
-      <change afterPath="$PROJECT_DIR$/frontend/vercel.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/views/AdminComics.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/art/Allegra.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/art/Argyris.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/art/Bonnie.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/art/Damein_Wolff.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/art/Darrien_Wolff.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/art/Dr_Leticia.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/art/Eizo.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/art/Elijah.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/art/Gabriella_De_Marco.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/art/Inferno.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/art/King.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/art/Paige.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/art/Priest_Marcie_Nagare.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/art/Simone.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/art/The_Forger.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/art/Tyler.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/art/Vennoa_KT_Tempest.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/art/Virus.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/art/Volt.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/art/Yue_Ling.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/comic/chapter1/Ch1P01.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/comic/chapter1/Ch1P02.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/comic/chapter1/Ch1P03.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/comic/chapter1/Ch1P04.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/comic/chapter1/Ch1P05.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/comic/chapter1/Ch1P06.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/comic/chapter1/Ch1P07.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/comic/chapter1/Ch1P08.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/comic/chapter1/Ch1P09.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/comic/chapter1/Ch1P10.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/comic/chapter1/Ch1P11.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/comic/chapter1/Ch1P12.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/comic/chapter1/Ch1P13.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/comic/chapter1/Ch1P14.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/comic/chapter1/Ch1P15.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/comic/chapter1/Ch1P16.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/comic/chapter1/Ch1P17.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/comic/chapter1/Ch1P18.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/comic/chapter1/Ch1P19.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/comic/chapter1/Ch1P20.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/comic/chapter1/Ch1P21.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/comic/chapter1/Ch1P22.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/comic/chapter1/Ch1P23.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/comic/chapter1/Ch1P24.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/comic/chapter1/Ch1P25.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/comic/chapter1/Ch1P26.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/comic/chapter2/Ch2P27.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/comic/chapter3/Ch3P45.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/comic/chapter4/Ch4P63.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/comic/chapter5/Ch5P79.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/comic/chapter6/Ch6P96.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/assets/comic/chapter6/Ch6P97.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/HeroSection.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/HeroSection.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/SiteHeader.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/SiteHeader.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/router/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/router/index.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/views/AdminDashboard.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/AdminDashboard.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/views/ChapterSelect.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/ChapterSelect.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/views/ComicPage.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/ComicPage.vue" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Vue Composition API Component" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -53,6 +118,11 @@
     "nodejs_package_manager_path": "npm",
     "ts.external.directory.path": "C:\\Program Files\\JetBrains\\IntelliJ IDEA 2025.1.1.1\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external",
     "vue.rearranger.settings.migration": "true"
+  },
+  "keyToStringList": {
+    "vue.recent.templates": [
+      "Vue Composition API Component"
+    ]
   }
 }]]></component>
   <component name="RecentsManager">
@@ -102,7 +172,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1775423168740</updated>
-      <workItem from="1775423169830" duration="8992000" />
+      <workItem from="1775423169830" duration="12864000" />
     </task>
     <task id="LOCAL-00002" summary="Initial Commit">
       <option name="closed" value="true" />
@@ -120,7 +190,15 @@
       <option name="project" value="LOCAL" />
       <updated>1775432071346</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="Initial Commit">
+      <option name="closed" value="true" />
+      <created>1775432521609</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1775432521609</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

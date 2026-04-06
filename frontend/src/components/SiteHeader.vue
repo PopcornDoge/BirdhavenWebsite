@@ -17,7 +17,7 @@
 
       <!-- Desktop chapter nav -->
       <div
-          v-if="isComicPage"
+          v-if="isComicPage && chapterNavReady"
           class="pointer-events-auto absolute left-1/2 hidden -translate-x-1/2 items-center gap-4 lg:flex"
       >
         <router-link
@@ -39,7 +39,7 @@
 
       <!-- Mobile chapter arrows -->
       <div
-          v-if="isComicPage"
+          v-if="isComicPage && chapterNavReady"
           class="pointer-events-auto absolute left-1/2 flex -translate-x-1/2 items-center gap-2 lg:hidden"
       >
         <router-link
@@ -64,10 +64,16 @@
       <div class="hidden flex-1 items-center justify-end gap-4 lg:flex">
         <nav class="nav-links">
           <router-link
-              :to="`${latestChapter}`"
+              v-if="latestChapter"
+              :to="latestChapter"
           >
             Latest Chapter
           </router-link>
+
+          <router-link v-else to="/chapters">
+            Latest Chapter
+          </router-link>
+
           <router-link to="/chapters">Chapter Select</router-link>
           <router-link to="/art">Art</router-link>
         </nav>
@@ -99,7 +105,19 @@
           class="mobile-menu mt-4 lg:hidden"
       >
         <nav class="mobile-nav">
-          <router-link to="/read/chapter1" @click="closeMobileMenu">
+          <router-link
+              v-if="latestChapter"
+              :to="latestChapter"
+              @click="closeMobileMenu"
+          >
+            Latest Chapter
+          </router-link>
+
+          <router-link
+              v-else
+              to="/chapters"
+              @click="closeMobileMenu"
+          >
             Latest Chapter
           </router-link>
 
@@ -127,6 +145,7 @@
 <script setup>
 import { computed, ref, onMounted, onBeforeUnmount, watch } from "vue"
 import { useRoute } from "vue-router"
+import { supabase } from "../lib/supabase.js"
 
 defineProps({
   theme: {
@@ -143,13 +162,33 @@ const baseOpacity = ref(1)
 const forceVisible = ref(false)
 const lastScrollY = ref(0)
 const isMobileMenuOpen = ref(false)
+const chapters = ref([])
+const isLoadingChapters = ref(false)
 
 const fadeDistance = 200
 const revealDuration = 1200
 let hideTimeout = null
 
+const normalizeSlug = (value) => String(value || "").trim().toLowerCase()
+
+const publishedChapters = computed(() => {
+  return [...chapters.value]
+      .filter((chapter) => chapter.published !== false)
+      .sort((a, b) => {
+        const aDate = new Date(a.created_at || 0).getTime()
+        const bDate = new Date(b.created_at || 0).getTime()
+        return aDate - bDate
+      })
+})
+
+const chapterNavReady = computed(() => {
+  return !isLoadingChapters.value && publishedChapters.value.length > 0
+})
+
 const latestChapter = computed(() => {
-  return chapterOrder[chapterOrder.length - 1]
+  if (!publishedChapters.value.length) return null
+  const latest = publishedChapters.value[publishedChapters.value.length - 1]
+  return `/read/${latest.slug}`
 })
 
 const clearHideTimeout = () => {
@@ -211,42 +250,63 @@ const computedOpacity = computed(() => {
 
 const isComicPage = computed(() => route.path.startsWith("/read"))
 
-const chapterOrder = [
-  "/read/chapter1",
-  "/read/chapter2",
-  "/read/chapter3",
-  "/read/chapter4",
-  "/read/chapter5",
-  "/read/chapter6",
-]
+const currentChapterIndex = computed(() => {
+  const currentSlug = normalizeSlug(route.params.chapter)
 
-const currentChapterIndex = computed(() =>
-    chapterOrder.findIndex((chapter) => chapter === route.path)
-)
+  return publishedChapters.value.findIndex(
+      (chapter) => normalizeSlug(chapter.slug) === currentSlug
+  )
+})
 
 const previousChapter = computed(() => {
   const index = currentChapterIndex.value
-  return index > 0 ? chapterOrder[index - 1] : null
+  if (index > 0) {
+    return `/read/${publishedChapters.value[index - 1].slug}`
+  }
+  return null
 })
 
 const nextChapter = computed(() => {
   const index = currentChapterIndex.value
-  return index !== -1 && index < chapterOrder.length - 1
-      ? chapterOrder[index + 1]
-      : null
+  if (index !== -1 && index < publishedChapters.value.length - 1) {
+    return `/read/${publishedChapters.value[index + 1].slug}`
+  }
+  return null
 })
 
+const loadChapters = async () => {
+  isLoadingChapters.value = true
+
+  const { data, error } = await supabase
+      .from("chapters")
+      .select("*")
+      .eq("published", true)
+      .order("created_at", { ascending: true })
+
+  if (error) {
+    console.error("loadChapters error:", error)
+    chapters.value = []
+    isLoadingChapters.value = false
+    return
+  }
+
+  chapters.value = data || []
+  isLoadingChapters.value = false
+}
+
 watch(
-    () => route.path,
-    () => {
+    () => route.fullPath,
+    async () => {
       closeMobileMenu()
+      await loadChapters()
     }
 )
 
-onMounted(() => {
+onMounted(async () => {
   lastScrollY.value = window.scrollY
   window.addEventListener("scroll", handleScroll, { passive: true })
   window.addEventListener("mousemove", handleMouseMove)
+  await loadChapters()
 })
 
 onBeforeUnmount(() => {

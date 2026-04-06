@@ -8,6 +8,7 @@ import Privacy from '../views/Privacy.vue'
 import AdminLogin from '../views/AdminLogin.vue'
 import AdminDashboard from '../views/AdminDashboard.vue'
 import AdminArtManager from "../views/AdminArtManager.vue";
+import AdminComics from "../views/AdminComics.vue";
 
 const routes = [
     { path: '/', component: Home },
@@ -19,6 +20,7 @@ const routes = [
     { path: '/admin/login', component: AdminLogin },
     { path: '/admin', component: AdminDashboard },
     { path: '/admin/art', component: AdminArtManager },
+    { path: '/admin/comics', component: AdminComics },
 ]
 
 export default createRouter({
