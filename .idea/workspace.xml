@@ -5,7 +5,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="4f7031e2-13e3-4faf-a87f-e8d670573ed8" name="Changes" comment="Changed default to light mode">
-      <change afterPath="$PROJECT_DIR$/frontend/public/favicon.ico" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/index.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -114,7 +113,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1775423168740</updated>
-      <workItem from="1775423169830" duration="14603000" />
+      <workItem from="1775423169830" duration="14663000" />
     </task>
     <task id="LOCAL-00002" summary="Initial Commit">
       <option name="closed" value="true" />
@@ -164,7 +163,15 @@
       <option name="project" value="LOCAL" />
       <updated>1775438146486</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="Changed default to light mode">
+      <option name="closed" value="true" />
+      <created>1775438274851</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1775438274851</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
