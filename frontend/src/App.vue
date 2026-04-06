@@ -30,7 +30,7 @@ import { ref, onMounted, watch } from "vue"
 
 const todos = ref([])
 
-const theme = ref("dark")
+const theme = ref("light")
 
 onMounted(() => {
   const savedTheme = localStorage.getItem("theme")
