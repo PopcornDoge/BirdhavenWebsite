@@ -79,11 +79,19 @@
         </nav>
 
         <button
-            class="theme-toggle"
+            class="theme-toggle-switch"
             type="button"
             @click="$emit('toggle-theme')"
+            :aria-label="theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
         >
-          {{ theme === "dark" ? "Light" : "Dark" }}
+          <div class="switch-track" :class="{ 'is-dark-track': theme === 'dark' }">
+            <div class="switch-thumb" :class="{ 'is-dark': theme === 'dark' }">
+              <font-awesome-icon
+                  :icon="theme === 'dark' ? 'sun' : 'moon'"
+                  class="switch-icon"
+              />
+            </div>
+          </div>
         </button>
       </div>
 
