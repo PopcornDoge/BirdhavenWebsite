@@ -31,12 +31,50 @@
                 class="filter-search w-full rounded-full border px-4 py-3 outline-none"
             />
 
+            <div class="filter-options flex flex-wrap justify-center gap-3">
+              <button
+                  type="button"
+                  class="filter-mode-btn"
+                  :class="{ 'filter-mode-btn-active': matchMode === 'all' }"
+                  @click="matchMode = 'all'"
+              >
+                Match All
+              </button>
+
+              <button
+                  type="button"
+                  class="filter-mode-btn"
+                  :class="{ 'filter-mode-btn-active': matchMode === 'any' }"
+                  @click="matchMode = 'any'"
+              >
+                Match Any
+              </button>
+
+              <button
+                  type="button"
+                  class="filter-mode-btn"
+                  :class="{ 'filter-mode-btn-active': sortMode === 'newest' }"
+                  @click="sortMode = 'newest'"
+              >
+                Newest First
+              </button>
+
+              <button
+                  type="button"
+                  class="filter-mode-btn"
+                  :class="{ 'filter-mode-btn-active': sortMode === 'oldest' }"
+                  @click="sortMode = 'oldest'"
+              >
+                Oldest First
+              </button>
+            </div>
+
             <div class="flex flex-wrap justify-center gap-3">
               <button
                   type="button"
                   class="filter-chip"
-                  :class="{ 'filter-chip-active': selectedTag === 'all' }"
-                  @click="selectedTag = 'all'"
+                  :class="{ 'filter-chip-active': selectedTags.length === 0 }"
+                  @click="clearSelectedTags"
               >
                 All
               </button>
@@ -46,11 +84,36 @@
                   :key="tag.name"
                   type="button"
                   class="filter-chip"
-                  :class="{ 'filter-chip-active': selectedTag === tag.name }"
-                  @click="selectedTag = tag.name"
+                  :class="{ 'filter-chip-active': selectedTags.includes(tag.name) }"
+                  @click="toggleTag(tag.name)"
               >
                 {{ tag.name }}
                 <span class="ml-2 opacity-70">({{ tag.count }})</span>
+              </button>
+            </div>
+
+            <div
+                v-if="selectedTags.length"
+                class="selected-filters flex flex-wrap justify-center gap-2"
+            >
+              <span class="page-label text-sm">Active filters:</span>
+
+              <button
+                  v-for="tag in selectedTags"
+                  :key="`selected-${tag}`"
+                  type="button"
+                  class="selected-filter-pill"
+                  @click="toggleTag(tag)"
+              >
+                {{ tag }} ×
+              </button>
+
+              <button
+                  type="button"
+                  class="clear-filters-btn"
+                  @click="clearSelectedTags"
+              >
+                Clear All
               </button>
             </div>
 
@@ -106,7 +169,7 @@
           v-else
           class="empty-state mx-auto max-w-xl rounded-2xl border p-8 text-center"
       >
-        No art matches that tag.
+        No art matches the selected filters.
       </div>
 
       <div
@@ -134,9 +197,16 @@
         </button>
 
         <div
-            class="flex max-h-[90vh] max-w-[90vw] flex-col items-center justify-center"
+            class="flex max-h-[90vh] max-w-[90vw] flex-col items-center justify-center gap-4"
             @click.stop
         >
+          <div
+              v-if="currentImage.title"
+              class="lightbox-title rounded-full bg-black/40 px-5 py-2 text-center text-white"
+          >
+            {{ currentImage.title }}
+          </div>
+
           <img
               :src="currentImage.imageUrl"
               :alt="currentImage.title"
@@ -165,20 +235,22 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { supabase } from '../lib/supabase.js'
+import {computed, onBeforeUnmount, onMounted, ref, watch} from 'vue'
+import {supabase} from '../lib/supabase.js'
 
 const artPieces = ref([])
 const isLoading = ref(true)
 const loadError = ref('')
 const isFilterOpen = ref(false)
 const filterSearch = ref('')
-const selectedTag = ref('all')
+const selectedTags = ref([])
+const matchMode = ref('all')
+const sortMode = ref('newest')
 const isLightboxOpen = ref(false)
 const currentIndex = ref(0)
 
 const getPublicImageUrl = (imagePath) => {
-  const { data } = supabase.storage.from('art').getPublicUrl(imagePath)
+  const {data} = supabase.storage.from('art').getPublicUrl(imagePath)
   return data?.publicUrl || ''
 }
 
@@ -187,11 +259,10 @@ const loadArt = async () => {
   loadError.value = ''
 
   try {
-    const { data, error } = await supabase
+    const {data, error} = await supabase
         .from('art')
         .select('*')
         .eq('published', true)
-        .order('created_at', { ascending: false })
 
     if (error) {
       console.error('loadArt error:', error)
@@ -220,7 +291,7 @@ const sortedTags = computed(() => {
   })
 
   return [...tagCounts.entries()]
-      .map(([name, count]) => ({ name, count }))
+      .map(([name, count]) => ({name, count}))
       .sort((a, b) => {
         if (b.count !== a.count) return b.count - a.count
         return a.name.localeCompare(b.name)
@@ -238,13 +309,32 @@ const visibleTags = computed(() => {
 })
 
 const filteredArtPieces = computed(() => {
-  if (selectedTag.value === 'all') {
-    return artPieces.value
+  let pieces = [...artPieces.value]
+
+  if (selectedTags.value.length) {
+    pieces = pieces.filter((piece) => {
+      const pieceTags = piece.tags || []
+
+      if (matchMode.value === 'all') {
+        return selectedTags.value.every((tag) => pieceTags.includes(tag))
+      }
+
+      return selectedTags.value.some((tag) => pieceTags.includes(tag))
+    })
   }
 
-  return artPieces.value.filter((piece) =>
-      (piece.tags || []).includes(selectedTag.value)
-  )
+  pieces.sort((a, b) => {
+    const aTime = new Date(a.created_at || 0).getTime()
+    const bTime = new Date(b.created_at || 0).getTime()
+
+    if (sortMode.value === 'oldest') {
+      return aTime - bTime
+    }
+
+    return bTime - aTime
+  })
+
+  return pieces
 })
 
 const currentImage = computed(() => {
@@ -255,6 +345,19 @@ const currentImage = computed(() => {
     tags: [],
   }
 })
+
+const toggleTag = (tagName) => {
+  if (selectedTags.value.includes(tagName)) {
+    selectedTags.value = selectedTags.value.filter((tag) => tag !== tagName)
+    return
+  }
+
+  selectedTags.value = [...selectedTags.value, tagName]
+}
+
+const clearSelectedTags = () => {
+  selectedTags.value = []
+}
 
 const openLightbox = (index) => {
   currentIndex.value = index
@@ -288,7 +391,7 @@ const handleKeydown = (event) => {
   }
 }
 
-watch(selectedTag, () => {
+watch([selectedTags, matchMode, sortMode], () => {
   currentIndex.value = 0
 })
 
@@ -340,6 +443,15 @@ onBeforeUnmount(() => {
   width: 100%;
 }
 
+.lightbox-title {
+  max-width: min(90vw, 40rem);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
 .filter-search {
   border-color: var(--border);
   background: var(--surface);
@@ -353,6 +465,29 @@ onBeforeUnmount(() => {
 
 .filter-search:focus {
   border-color: var(--border-strong);
+}
+
+.filter-options {
+  width: 100%;
+}
+
+.filter-mode-btn {
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+  color: var(--text-main);
+  border-radius: 999px;
+  padding: 0.5rem 0.9rem;
+  font-weight: 600;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.filter-mode-btn:hover {
+  background: var(--surface-hover);
+}
+
+.filter-mode-btn-active {
+  background: var(--button-primary-bg);
+  color: var(--button-primary-text);
 }
 
 .filter-chip {
@@ -371,6 +506,26 @@ onBeforeUnmount(() => {
 .filter-chip-active {
   background: var(--button-primary-bg);
   color: var(--button-primary-text);
+}
+
+.selected-filters {
+  width: 100%;
+}
+
+.selected-filter-pill,
+.clear-filters-btn {
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+  color: var(--text-main);
+  border-radius: 999px;
+  padding: 0.45rem 0.8rem;
+  font-size: 0.9rem;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.selected-filter-pill:hover,
+.clear-filters-btn:hover {
+  background: var(--surface-hover);
 }
 
 .filter-empty {

@@ -5,7 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="4f7031e2-13e3-4faf-a87f-e8d670573ed8" name="Changes" comment="Changed default to light mode">
-      <change beforePath="$PROJECT_DIR$/frontend/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/App.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/views/AdminArtManager.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/AdminArtManager.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/views/ArtPage.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/ArtPage.vue" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -114,7 +117,10 @@
       <option name="presentableId" value="Default" />
       <updated>1775423168740</updated>
       <workItem from="1775423169830" duration="16712000" />
-      <workItem from="1775485360139" duration="192000" />
+      <workItem from="1775485360139" duration="885000" />
+      <workItem from="1775501028062" duration="565000" />
+      <workItem from="1775571793404" duration="720000" />
+      <workItem from="1775671107569" duration="8397000" />
     </task>
     <task id="LOCAL-00002" summary="Initial Commit">
       <option name="closed" value="true" />
@@ -204,7 +210,15 @@
       <option name="project" value="LOCAL" />
       <updated>1775485505109</updated>
     </task>
-    <option name="localTasksCounter" value="13" />
+    <task id="LOCAL-00013" summary="Changed default to light mode">
+      <option name="closed" value="true" />
+      <created>1775485656290</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1775485656290</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
