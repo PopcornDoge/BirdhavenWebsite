@@ -22,79 +22,104 @@
         <Transition name="filter-panel">
           <div
               v-if="isFilterOpen"
-              class="filter-panel flex w-full max-w-3xl flex-col items-center gap-4"
+              class="filter-panel"
           >
-            <input
-                v-model="filterSearch"
-                type="text"
-                placeholder="Search filters..."
-                class="filter-search w-full rounded-full border px-4 py-3 outline-none"
-            />
+            <div class="filter-search-wrap">
+              <input
+                  ref="filterSearchInputRef"
+                  v-model="filterSearch"
+                  type="text"
+                  placeholder="Search filters..."
+                  class="filter-search"
+                  @focus="isAutocompleteOpen = true"
+                  @keydown.down.prevent="moveAutocompleteSelection(1)"
+                  @keydown.up.prevent="moveAutocompleteSelection(-1)"
+                  @keydown.enter.prevent="handleAutocompleteEnter"
+                  @keydown.esc="closeAutocomplete"
+              />
 
-            <div class="filter-options flex flex-wrap justify-center gap-3">
+              <div
+                  v-if="showAutocomplete"
+                  class="filter-autocomplete"
+              >
+                <button
+                    v-for="(tag, index) in autocompleteTags"
+                    :key="tag.name"
+                    type="button"
+                    class="filter-autocomplete-item"
+                    :class="{ 'filter-autocomplete-item-active': index === autocompleteIndex }"
+                    @mousedown.prevent="selectAutocompleteTag(tag.name)"
+                >
+                  <span>{{ tag.name }}</span>
+                  <span class="opacity-70">({{ tag.count }})</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="filter-toolbar">
               <button
                   type="button"
-                  class="filter-mode-btn"
-                  :class="{ 'filter-mode-btn-active': matchMode === 'all' }"
-                  @click="matchMode = 'all'"
+                  class="filter-toggle-pill"
+                  @click="toggleMatchMode"
               >
-                Match All
+                {{ matchMode === 'all' ? 'Match All' : 'Match Any' }}
               </button>
 
               <button
                   type="button"
-                  class="filter-mode-btn"
-                  :class="{ 'filter-mode-btn-active': matchMode === 'any' }"
-                  @click="matchMode = 'any'"
+                  class="filter-toggle-pill"
+                  @click="toggleSortMode"
               >
-                Match Any
+                {{ sortMode === 'newest' ? 'Newest First' : 'Oldest First' }}
               </button>
 
               <button
+                  v-if="selectedTags.length"
                   type="button"
-                  class="filter-mode-btn"
-                  :class="{ 'filter-mode-btn-active': sortMode === 'newest' }"
-                  @click="sortMode = 'newest'"
+                  class="filter-clear-pill"
+                  @click="clearSelectedTags"
               >
-                Newest First
-              </button>
-
-              <button
-                  type="button"
-                  class="filter-mode-btn"
-                  :class="{ 'filter-mode-btn-active': sortMode === 'oldest' }"
-                  @click="sortMode = 'oldest'"
-              >
-                Oldest First
+                Clear Filters
               </button>
             </div>
 
-            <div class="flex flex-wrap justify-center gap-3">
-              <button
-                  type="button"
-                  class="filter-chip"
-                  :class="{ 'filter-chip-active': selectedTags.length === 0 }"
-                  @click="clearSelectedTags"
-              >
-                All
-              </button>
+            <div class="filter-chip-panel">
+              <div class="filter-chip-grid">
+                <button
+                    type="button"
+                    class="filter-chip"
+                    :class="{ 'filter-chip-active': selectedTags.length === 0 }"
+                    @click="clearSelectedTags"
+                >
+                  All
+                </button>
+
+                <button
+                    v-for="tag in displayedTags"
+                    :key="tag.name"
+                    type="button"
+                    class="filter-chip"
+                    :class="{ 'filter-chip-active': selectedTags.includes(tag.name) }"
+                    @click="toggleTag(tag.name)"
+                >
+                  {{ tag.name }}
+                  <span class="ml-2 opacity-70">({{ tag.count }})</span>
+                </button>
+              </div>
 
               <button
-                  v-for="tag in visibleTags"
-                  :key="tag.name"
+                  v-if="shouldShowMoreButton"
                   type="button"
-                  class="filter-chip"
-                  :class="{ 'filter-chip-active': selectedTags.includes(tag.name) }"
-                  @click="toggleTag(tag.name)"
+                  class="show-more-btn"
+                  @click="isShowingAllTags = !isShowingAllTags"
               >
-                {{ tag.name }}
-                <span class="ml-2 opacity-70">({{ tag.count }})</span>
+                {{ isShowingAllTags ? 'Show Less' : `Show More (${hiddenTagCount})` }}
               </button>
             </div>
 
             <div
                 v-if="selectedTags.length"
-                class="selected-filters flex flex-wrap justify-center gap-2"
+                class="selected-filters"
             >
               <span class="page-label text-sm">Active filters:</span>
 
@@ -106,14 +131,6 @@
                   @click="toggleTag(tag)"
               >
                 {{ tag }} ×
-              </button>
-
-              <button
-                  type="button"
-                  class="clear-filters-btn"
-                  @click="clearSelectedTags"
-              >
-                Clear All
               </button>
             </div>
 
@@ -235,8 +252,8 @@
 </template>
 
 <script setup>
-import {computed, onBeforeUnmount, onMounted, ref, watch} from 'vue'
-import {supabase} from '../lib/supabase.js'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { supabase } from '../lib/supabase.js'
 
 const artPieces = ref([])
 const isLoading = ref(true)
@@ -249,8 +266,15 @@ const sortMode = ref('newest')
 const isLightboxOpen = ref(false)
 const currentIndex = ref(0)
 
+const isAutocompleteOpen = ref(false)
+const autocompleteIndex = ref(0)
+const filterSearchInputRef = ref(null)
+const isShowingAllTags = ref(false)
+
+const COLLAPSED_TAG_LIMIT = 11
+
 const getPublicImageUrl = (imagePath) => {
-  const {data} = supabase.storage.from('art').getPublicUrl(imagePath)
+  const { data } = supabase.storage.from('art').getPublicUrl(imagePath)
   return data?.publicUrl || ''
 }
 
@@ -259,7 +283,7 @@ const loadArt = async () => {
   loadError.value = ''
 
   try {
-    const {data, error} = await supabase
+    const { data, error } = await supabase
         .from('art')
         .select('*')
         .eq('published', true)
@@ -291,7 +315,7 @@ const sortedTags = computed(() => {
   })
 
   return [...tagCounts.entries()]
-      .map(([name, count]) => ({name, count}))
+      .map(([name, count]) => ({ name, count }))
       .sort((a, b) => {
         if (b.count !== a.count) return b.count - a.count
         return a.name.localeCompare(b.name)
@@ -305,6 +329,43 @@ const visibleTags = computed(() => {
 
   return sortedTags.value.filter((tag) =>
       tag.name.toLowerCase().includes(query)
+  )
+})
+
+const displayedTags = computed(() => {
+  if (isShowingAllTags.value) {
+    return visibleTags.value
+  }
+
+  return visibleTags.value.slice(0, COLLAPSED_TAG_LIMIT)
+})
+
+const hiddenTagCount = computed(() => {
+  return Math.max(visibleTags.value.length - COLLAPSED_TAG_LIMIT, 0)
+})
+
+const shouldShowMoreButton = computed(() => {
+  return visibleTags.value.length > COLLAPSED_TAG_LIMIT
+})
+
+const autocompleteTags = computed(() => {
+  const query = filterSearch.value.trim().toLowerCase()
+
+  if (!query) return []
+
+  return sortedTags.value
+      .filter((tag) =>
+          tag.name.toLowerCase().includes(query) &&
+          !selectedTags.value.includes(tag.name)
+      )
+      .slice(0, 8)
+})
+
+const showAutocomplete = computed(() => {
+  return (
+      isAutocompleteOpen.value &&
+      autocompleteTags.value.length > 0 &&
+      filterSearch.value.trim().length > 0
   )
 })
 
@@ -359,6 +420,68 @@ const clearSelectedTags = () => {
   selectedTags.value = []
 }
 
+const toggleMatchMode = () => {
+  matchMode.value = matchMode.value === 'all' ? 'any' : 'all'
+}
+
+const toggleSortMode = () => {
+  sortMode.value = sortMode.value === 'newest' ? 'oldest' : 'newest'
+}
+
+const selectAutocompleteTag = (tagName) => {
+  if (!selectedTags.value.includes(tagName)) {
+    selectedTags.value = [...selectedTags.value, tagName]
+  }
+
+  filterSearch.value = ''
+  autocompleteIndex.value = 0
+  isAutocompleteOpen.value = false
+}
+
+const moveAutocompleteSelection = (direction) => {
+  if (!showAutocomplete.value) {
+    isAutocompleteOpen.value = true
+    autocompleteIndex.value = 0
+    return
+  }
+
+  const lastIndex = autocompleteTags.value.length - 1
+
+  if (direction > 0) {
+    autocompleteIndex.value =
+        autocompleteIndex.value >= lastIndex ? 0 : autocompleteIndex.value + 1
+    return
+  }
+
+  autocompleteIndex.value =
+      autocompleteIndex.value <= 0 ? lastIndex : autocompleteIndex.value - 1
+}
+
+const handleAutocompleteEnter = () => {
+  if (showAutocomplete.value && autocompleteTags.value[autocompleteIndex.value]) {
+    selectAutocompleteTag(autocompleteTags.value[autocompleteIndex.value].name)
+    return
+  }
+
+  if (visibleTags.value.length === 1 && !selectedTags.value.includes(visibleTags.value[0].name)) {
+    selectAutocompleteTag(visibleTags.value[0].name)
+  }
+}
+
+const closeAutocomplete = () => {
+  isAutocompleteOpen.value = false
+  autocompleteIndex.value = 0
+}
+
+const handleDocumentClick = (event) => {
+  if (!filterSearchInputRef.value) return
+
+  const wrapper = filterSearchInputRef.value.closest('.filter-search-wrap')
+  if (wrapper && !wrapper.contains(event.target)) {
+    closeAutocomplete()
+  }
+}
+
 const openLightbox = (index) => {
   currentIndex.value = index
   isLightboxOpen.value = true
@@ -380,14 +503,14 @@ const prevImage = () => {
 }
 
 const handleKeydown = (event) => {
-  if (!isLightboxOpen.value) return
-
-  if (event.key === 'Escape') {
-    closeLightbox()
-  } else if (event.key === 'ArrowRight') {
-    nextImage()
-  } else if (event.key === 'ArrowLeft') {
-    prevImage()
+  if (isLightboxOpen.value) {
+    if (event.key === 'Escape') {
+      closeLightbox()
+    } else if (event.key === 'ArrowRight') {
+      nextImage()
+    } else if (event.key === 'ArrowLeft') {
+      prevImage()
+    }
   }
 }
 
@@ -395,19 +518,29 @@ watch([selectedTags, matchMode, sortMode], () => {
   currentIndex.value = 0
 })
 
+watch(filterSearch, () => {
+  autocompleteIndex.value = 0
+  isAutocompleteOpen.value = true
+  isShowingAllTags.value = false
+})
+
 watch(isFilterOpen, (open) => {
   if (!open) {
     filterSearch.value = ''
+    closeAutocomplete()
+    isShowingAllTags.value = false
   }
 })
 
 onMounted(async () => {
   window.addEventListener('keydown', handleKeydown)
+  document.addEventListener('click', handleDocumentClick)
   await loadArt()
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleKeydown)
+  document.removeEventListener('click', handleDocumentClick)
   document.body.style.overflow = ''
 })
 </script>
@@ -440,6 +573,18 @@ onBeforeUnmount(() => {
 }
 
 .filter-panel {
+  width: min(100%, 56rem);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 1.5rem;
+  padding: 1rem;
+}
+
+.filter-search-wrap {
+  position: relative;
   width: 100%;
 }
 
@@ -453,9 +598,12 @@ onBeforeUnmount(() => {
 }
 
 .filter-search {
-  border-color: var(--border);
-  background: var(--surface);
+  width: 100%;
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
   color: var(--text-main);
+  border-radius: 999px;
+  padding: 0.95rem 1rem;
   transition: border-color 0.2s ease, background 0.2s ease;
 }
 
@@ -467,27 +615,76 @@ onBeforeUnmount(() => {
   border-color: var(--border-strong);
 }
 
-.filter-options {
-  width: 100%;
+.filter-autocomplete {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 1rem;
+  padding: 0.4rem;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
-.filter-mode-btn {
+.filter-autocomplete-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  text-align: left;
+  border: none;
+  background: transparent;
+  color: var(--text-main);
+  border-radius: 0.8rem;
+  padding: 0.75rem 0.9rem;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.filter-autocomplete-item:hover,
+.filter-autocomplete-item-active {
+  background: var(--surface-hover);
+}
+
+.filter-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.filter-toggle-pill,
+.filter-clear-pill {
   border: 1px solid var(--border);
   background: var(--surface-strong);
   color: var(--text-main);
   border-radius: 999px;
-  padding: 0.5rem 0.9rem;
+  padding: 0.7rem 1rem;
   font-weight: 600;
-  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
 }
 
-.filter-mode-btn:hover {
+.filter-toggle-pill:hover,
+.filter-clear-pill:hover {
   background: var(--surface-hover);
+  transform: translateY(-1px);
 }
 
-.filter-mode-btn-active {
-  background: var(--button-primary-bg);
-  color: var(--button-primary-text);
+.filter-chip-panel {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.filter-chip-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
 }
 
 .filter-chip {
@@ -495,12 +692,14 @@ onBeforeUnmount(() => {
   background: var(--surface);
   color: var(--text-muted);
   border-radius: 999px;
-  padding: 0.5rem 0.9rem;
-  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  padding: 0.75rem 0.95rem;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  text-align: center;
 }
 
 .filter-chip:hover {
   background: var(--surface-hover);
+  transform: translateY(-1px);
 }
 
 .filter-chip-active {
@@ -508,12 +707,32 @@ onBeforeUnmount(() => {
   color: var(--button-primary-text);
 }
 
-.selected-filters {
-  width: 100%;
+.show-more-btn {
+  align-self: center;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-main);
+  border-radius: 999px;
+  padding: 0.65rem 1rem;
+  font-weight: 600;
+  transition: background 0.2s ease, transform 0.2s ease;
 }
 
-.selected-filter-pill,
-.clear-filters-btn {
+.show-more-btn:hover {
+  background: var(--surface-hover);
+  transform: translateY(-1px);
+}
+
+.selected-filters {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.selected-filter-pill {
   border: 1px solid var(--border);
   background: var(--surface-strong);
   color: var(--text-main);
@@ -523,13 +742,13 @@ onBeforeUnmount(() => {
   transition: background 0.2s ease, border-color 0.2s ease;
 }
 
-.selected-filter-pill:hover,
-.clear-filters-btn:hover {
+.selected-filter-pill:hover {
   background: var(--surface-hover);
 }
 
 .filter-empty {
   color: var(--text-soft);
+  text-align: center;
 }
 
 .empty-state {
@@ -553,5 +772,11 @@ onBeforeUnmount(() => {
 .filter-panel-leave-from {
   opacity: 1;
   transform: translateY(0);
+}
+
+@media (min-width: 768px) {
+  .filter-chip-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
 }
 </style>

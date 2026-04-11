@@ -108,7 +108,7 @@
         <div>
           <h2 class="page-title text-2xl font-bold">Existing Chapters</h2>
           <p class="page-text mt-2">
-            Delete a chapter and all of its uploaded pages.
+            Edit title, slug, and publish state, or delete a chapter and all of its uploaded pages.
           </p>
         </div>
 
@@ -116,29 +116,76 @@
           Loading chapters...
         </div>
 
-        <div v-else-if="chapters.length" class="space-y-3">
+        <div v-else-if="chapters.length" class="space-y-4">
           <div
               v-for="chapter in chapters"
               :key="chapter.id"
-              class="chapter-row"
+              class="chapter-card"
+              :class="{ 'chapter-card-dirty': isChapterDirty(chapter) }"
           >
-            <div class="min-w-0">
-              <p class="chapter-row-title">
-                {{ chapter.title }}
-              </p>
+            <div class="grid gap-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
+              <div>
+                <label class="form-label">Chapter Name</label>
+                <input
+                    v-model="chapter.title"
+                    type="text"
+                    class="form-input"
+                    placeholder="Chapter Name"
+                />
+              </div>
+
+              <div>
+                <label class="form-label">Slug</label>
+                <input
+                    v-model="chapter.slug"
+                    type="text"
+                    class="form-input"
+                    placeholder="chapter1"
+                />
+              </div>
+
+              <div class="chapter-status-wrap">
+                <label class="inline-flex items-center gap-2">
+                  <input v-model="chapter.published" type="checkbox" />
+                  <span class="page-text">Published</span>
+                </label>
+
+                <span
+                    class="chapter-status-pill"
+                    :class="chapter.published ? 'chapter-status-pill-live' : 'chapter-status-pill-hidden'"
+                >
+                  {{ chapter.published ? 'Live' : 'Hidden' }}
+                </span>
+              </div>
+            </div>
+
+            <div class="chapter-row-meta-wrap">
               <p class="chapter-row-meta">
-                /read/{{ chapter.slug }}
+                Route:
+                <span v-if="chapter.published">/read/{{ chapter.slug }}</span>
+                <span v-else>Unpublished, not publicly navigable</span>
               </p>
             </div>
 
-            <button
-                type="button"
-                class="delete-btn"
-                :disabled="deletingChapterId === chapter.id"
-                @click="handleDeleteChapter(chapter)"
-            >
-              {{ deletingChapterId === chapter.id ? 'Deleting...' : 'Delete' }}
-            </button>
+            <div class="chapter-actions">
+              <button
+                  type="button"
+                  class="save-btn"
+                  :disabled="savingChapterId === chapter.id || !isChapterDirty(chapter)"
+                  @click="handleSaveChapter(chapter)"
+              >
+                {{ savingChapterId === chapter.id ? 'Saving...' : 'Save Changes' }}
+              </button>
+
+              <button
+                  type="button"
+                  class="delete-btn"
+                  :disabled="deletingChapterId === chapter.id"
+                  @click="handleDeleteChapter(chapter)"
+              >
+                {{ deletingChapterId === chapter.id ? 'Deleting...' : 'Delete' }}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -163,6 +210,7 @@ const folderInputRef = ref(null)
 const isUploading = ref(false)
 const isLoadingChapters = ref(true)
 const deletingChapterId = ref(null)
+const savingChapterId = ref(null)
 const successMessage = ref('')
 const errorMessage = ref('')
 const chapters = ref([])
@@ -186,6 +234,29 @@ const sortedSelectedFiles = computed(() => {
   return sortFilesNumerically(selectedFiles.value)
 })
 
+const makeEditableChapter = (chapter) => {
+  return {
+    ...chapter,
+    originalTitle: chapter.title || '',
+    originalSlug: chapter.slug || '',
+    originalPublished: chapter.published,
+  }
+}
+
+const isChapterDirty = (chapter) => {
+  return (
+      (chapter.title || '').trim() !== (chapter.originalTitle || '').trim() ||
+      (chapter.slug || '').trim() !== (chapter.originalSlug || '').trim() ||
+      chapter.published !== chapter.originalPublished
+  )
+}
+
+const syncChapterOriginals = (chapter) => {
+  chapter.originalTitle = chapter.title || ''
+  chapter.originalSlug = chapter.slug || ''
+  chapter.originalPublished = chapter.published
+}
+
 const loadChapters = async () => {
   isLoadingChapters.value = true
 
@@ -201,7 +272,7 @@ const loadChapters = async () => {
       return
     }
 
-    chapters.value = data || []
+    chapters.value = (data || []).map(makeEditableChapter)
   } finally {
     isLoadingChapters.value = false
   }
@@ -326,9 +397,60 @@ const handleUploadChapter = async () => {
   }
 }
 
+const handleSaveChapter = async (chapter) => {
+  successMessage.value = ''
+  errorMessage.value = ''
+  savingChapterId.value = chapter.id
+
+  try {
+    const nextTitle = (chapter.title || '').trim()
+    const nextSlug = (chapter.slug || '').trim()
+
+    if (!nextTitle) {
+      errorMessage.value = 'Chapter name cannot be empty.'
+      return
+    }
+
+    if (!nextSlug) {
+      errorMessage.value = 'Chapter slug cannot be empty.'
+      return
+    }
+
+    const { data: updatedChapters, error } = await supabase
+        .from('chapters')
+        .update({
+          title: nextTitle,
+          slug: nextSlug,
+          published: chapter.published,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', chapter.id)
+        .select()
+
+    if (error) {
+      errorMessage.value = error.message
+      return
+    }
+
+    if (!updatedChapters || updatedChapters.length === 0) {
+      errorMessage.value = 'No chapter was updated.'
+      return
+    }
+
+    chapter.title = nextTitle
+    chapter.slug = nextSlug
+    syncChapterOriginals(chapter)
+    successMessage.value = `Saved "${chapter.title}".`
+  } catch (error) {
+    errorMessage.value = error?.message || 'Unable to save chapter changes.'
+  } finally {
+    savingChapterId.value = null
+  }
+}
+
 const handleDeleteChapter = async (chapter) => {
   const confirmed = window.confirm(
-    `Delete "${chapter.title}" and all of its pages? This cannot be undone.`
+      `Delete "${chapter.title}" and all of its pages? This cannot be undone.`
   )
 
   if (!confirmed) return
@@ -339,9 +461,9 @@ const handleDeleteChapter = async (chapter) => {
 
   try {
     const { data: pageRows, error: pagesFetchError } = await supabase
-      .from('comic_pages')
-      .select('image_path')
-      .eq('chapter_id', chapter.id)
+        .from('comic_pages')
+        .select('image_path')
+        .eq('chapter_id', chapter.id)
 
     if (pagesFetchError) {
       errorMessage.value = pagesFetchError.message
@@ -349,13 +471,13 @@ const handleDeleteChapter = async (chapter) => {
     }
 
     const filePaths = (pageRows || [])
-      .map((page) => page.image_path)
-      .filter(Boolean)
+        .map((page) => page.image_path)
+        .filter(Boolean)
 
     if (filePaths.length) {
       const { error: storageDeleteError } = await supabase.storage
-        .from('comics')
-        .remove(filePaths)
+          .from('comics')
+          .remove(filePaths)
 
       if (storageDeleteError) {
         errorMessage.value = storageDeleteError.message
@@ -364,10 +486,10 @@ const handleDeleteChapter = async (chapter) => {
     }
 
     const { data: deletedChapters, error: chapterDeleteError } = await supabase
-      .from('chapters')
-      .delete()
-      .eq('id', chapter.id)
-      .select()
+        .from('chapters')
+        .delete()
+        .eq('id', chapter.id)
+        .select()
 
     if (chapterDeleteError) {
       errorMessage.value = chapterDeleteError.message
@@ -436,7 +558,8 @@ onMounted(async () => {
 .file-picker-btn,
 .primary-btn,
 .back-btn,
-.delete-btn {
+.delete-btn,
+.save-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -453,12 +576,14 @@ onMounted(async () => {
 .file-picker-btn:hover,
 .primary-btn:hover,
 .back-btn:hover,
-.delete-btn:hover {
+.delete-btn:hover,
+.save-btn:hover {
   transform: translateY(-1px);
 }
 
 .primary-btn:disabled,
-.delete-btn:disabled {
+.delete-btn:disabled,
+.save-btn:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }
@@ -490,26 +615,62 @@ onMounted(async () => {
   padding: 0.35rem 0;
 }
 
-.chapter-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+.chapter-card {
   border: 1px solid var(--border);
   background: var(--surface-strong);
   border-radius: 1rem;
   padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-.chapter-row-title {
-  color: var(--text-main);
-  font-weight: 600;
+.chapter-card-dirty {
+  border-color: var(--border-strong);
+  box-shadow: 0 0 0 1px var(--border-strong);
+}
+
+.chapter-status-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.chapter-status-pill {
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.chapter-status-pill-live {
+  background: rgba(21, 128, 61, 0.14);
+  color: #15803d;
+}
+
+.chapter-status-pill-hidden {
+  background: rgba(220, 38, 38, 0.12);
+  color: #dc2626;
+}
+
+.chapter-row-meta-wrap {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
 }
 
 .chapter-row-meta {
   color: var(--text-muted);
   font-size: 0.9rem;
   margin-top: 0.25rem;
+}
+
+.chapter-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: flex-end;
 }
 
 .success-text {

@@ -87,17 +87,41 @@
 
           <div class="md:col-span-2">
             <label class="form-label">Tags</label>
-            <div class="tag-entry-row">
-              <input
-                  v-model="singleTagInput"
-                  type="text"
-                  class="form-input"
-                  placeholder="Add a tag and press Add"
-                  @keydown.enter.prevent="addSingleTag"
-              />
-              <button type="button" class="tag-add-btn" @click="addSingleTag">
-                Add
-              </button>
+
+            <div class="tag-entry-wrap">
+              <div class="tag-entry-row">
+                <input
+                    ref="singleTagInputRef"
+                    v-model="singleTagInput"
+                    type="text"
+                    class="form-input"
+                    placeholder="Add a tag and press Add"
+                    @focus="openSingleTagAutocomplete"
+                    @keydown.enter.prevent="handleSingleTagEnter"
+                    @keydown.down.prevent="moveSingleAutocompleteSelection(1)"
+                    @keydown.up.prevent="moveSingleAutocompleteSelection(-1)"
+                    @keydown.esc="closeSingleTagAutocomplete"
+                />
+                <button type="button" class="tag-add-btn" @click="addSingleTag">
+                  Add
+                </button>
+              </div>
+
+              <div
+                  v-if="showSingleTagAutocomplete"
+                  class="tag-autocomplete"
+              >
+                <button
+                    v-for="(tag, index) in singleTagSuggestions"
+                    :key="`single-${tag}`"
+                    type="button"
+                    class="tag-autocomplete-item"
+                    :class="{ 'tag-autocomplete-item-active': index === singleTagAutocompleteIndex }"
+                    @mousedown.prevent="selectSingleAutocompleteTag(tag)"
+                >
+                  {{ tag }}
+                </button>
+              </div>
             </div>
 
             <div class="mt-3 flex flex-wrap gap-2">
@@ -298,17 +322,40 @@
 
                 <div>
                   <label class="form-label">Edit Tags</label>
-                  <div class="tag-entry-row">
-                    <input
-                        v-model="piece.newTag"
-                        type="text"
-                        class="form-input"
-                        placeholder="Add tag"
-                        @keydown.enter.prevent="addExistingTag(piece)"
-                    />
-                    <button type="button" class="tag-add-btn" @click="addExistingTag(piece)">
-                      Add
-                    </button>
+
+                  <div class="tag-entry-wrap">
+                    <div class="tag-entry-row">
+                      <input
+                          v-model="piece.newTag"
+                          type="text"
+                          class="form-input"
+                          placeholder="Add tag"
+                          @focus="openPieceTagAutocomplete(piece)"
+                          @keydown.enter.prevent="handlePieceTagEnter(piece)"
+                          @keydown.down.prevent="movePieceAutocompleteSelection(piece, 1)"
+                          @keydown.up.prevent="movePieceAutocompleteSelection(piece, -1)"
+                          @keydown.esc="closePieceTagAutocomplete(piece)"
+                      />
+                      <button type="button" class="tag-add-btn" @click="addExistingTag(piece)">
+                        Add
+                      </button>
+                    </div>
+
+                    <div
+                        v-if="showPieceTagAutocomplete(piece)"
+                        class="tag-autocomplete"
+                    >
+                      <button
+                          v-for="(tag, index) in getPieceTagSuggestions(piece)"
+                          :key="`${piece.id}-${tag}`"
+                          type="button"
+                          class="tag-autocomplete-item"
+                          :class="{ 'tag-autocomplete-item-active': index === (piece.tagAutocompleteIndex || 0) }"
+                          @mousedown.prevent="selectPieceAutocompleteTag(piece, tag)"
+                      >
+                        {{ tag }}
+                      </button>
+                    </div>
                   </div>
 
                   <div class="mt-3 flex flex-wrap gap-2">
@@ -364,6 +411,9 @@ const singleTagInput = ref('')
 const singleSelectedFile = ref(null)
 const singleSelectedFileName = ref('')
 const singleFileInputRef = ref(null)
+const singleTagInputRef = ref(null)
+const isSingleTagAutocompleteOpen = ref(false)
+const singleTagAutocompleteIndex = ref(0)
 
 const bulkSelectedFiles = ref([])
 const bulkFileInputRef = ref(null)
@@ -408,6 +458,42 @@ const formatTitleFromFileName = (fileName) => {
       .replace(/\s+/g, ' ')
       .trim()
 }
+
+const allKnownTags = computed(() => {
+  const tagSet = new Set()
+
+  artPieces.value.forEach((piece) => {
+    ;(piece.tags || []).forEach((tag) => {
+      const cleanTag = String(tag || '').trim()
+      if (cleanTag) {
+        tagSet.add(cleanTag)
+      }
+    })
+  })
+
+  return [...tagSet].sort((a, b) => a.localeCompare(b))
+})
+
+const singleTagSuggestions = computed(() => {
+  const query = singleTagInput.value.trim().toLowerCase()
+
+  if (!query) return []
+
+  return allKnownTags.value
+      .filter((tag) =>
+          tag.toLowerCase().includes(query) &&
+          !singleArt.tags.includes(tag)
+      )
+      .slice(0, 8)
+})
+
+const showSingleTagAutocomplete = computed(() => {
+  return (
+      isSingleTagAutocompleteOpen.value &&
+      singleTagSuggestions.value.length > 0 &&
+      singleTagInput.value.trim().length > 0
+  )
+})
 
 const bulkSelectedFilesLabel = computed(() => {
   if (!bulkSelectedFiles.value.length) return 'No files selected'
@@ -458,6 +544,124 @@ const filteredAdminArtPieces = computed(() => {
   })
 })
 
+const getPieceTagSuggestions = (piece) => {
+  const query = (piece.newTag || '').trim().toLowerCase()
+
+  if (!query) return []
+
+  return allKnownTags.value
+      .filter((tag) =>
+          tag.toLowerCase().includes(query) &&
+          !(piece.tags || []).includes(tag)
+      )
+      .slice(0, 8)
+}
+
+const showPieceTagAutocomplete = (piece) => {
+  return Boolean(
+      piece.isTagAutocompleteOpen &&
+      getPieceTagSuggestions(piece).length > 0 &&
+      (piece.newTag || '').trim().length > 0
+  )
+}
+
+const openSingleTagAutocomplete = () => {
+  isSingleTagAutocompleteOpen.value = true
+}
+
+const closeSingleTagAutocomplete = () => {
+  isSingleTagAutocompleteOpen.value = false
+  singleTagAutocompleteIndex.value = 0
+}
+
+const moveSingleAutocompleteSelection = (direction) => {
+  if (!showSingleTagAutocomplete.value) {
+    isSingleTagAutocompleteOpen.value = true
+    singleTagAutocompleteIndex.value = 0
+    return
+  }
+
+  const lastIndex = singleTagSuggestions.value.length - 1
+
+  if (direction > 0) {
+    singleTagAutocompleteIndex.value =
+        singleTagAutocompleteIndex.value >= lastIndex ? 0 : singleTagAutocompleteIndex.value + 1
+    return
+  }
+
+  singleTagAutocompleteIndex.value =
+      singleTagAutocompleteIndex.value <= 0 ? lastIndex : singleTagAutocompleteIndex.value - 1
+}
+
+const selectSingleAutocompleteTag = (tag) => {
+  if (!singleArt.tags.includes(tag)) {
+    singleArt.tags.push(tag)
+  }
+
+  singleTagInput.value = ''
+  closeSingleTagAutocomplete()
+}
+
+const handleSingleTagEnter = () => {
+  if (showSingleTagAutocomplete.value && singleTagSuggestions.value[singleTagAutocompleteIndex.value]) {
+    selectSingleAutocompleteTag(singleTagSuggestions.value[singleTagAutocompleteIndex.value])
+    return
+  }
+
+  addSingleTag()
+}
+
+const openPieceTagAutocomplete = (piece) => {
+  piece.isTagAutocompleteOpen = true
+  piece.tagAutocompleteIndex = 0
+}
+
+const closePieceTagAutocomplete = (piece) => {
+  piece.isTagAutocompleteOpen = false
+  piece.tagAutocompleteIndex = 0
+}
+
+const movePieceAutocompleteSelection = (piece, direction) => {
+  const suggestions = getPieceTagSuggestions(piece)
+
+  if (!showPieceTagAutocomplete(piece)) {
+    piece.isTagAutocompleteOpen = true
+    piece.tagAutocompleteIndex = 0
+    return
+  }
+
+  const lastIndex = suggestions.length - 1
+
+  if (direction > 0) {
+    piece.tagAutocompleteIndex =
+        (piece.tagAutocompleteIndex || 0) >= lastIndex ? 0 : (piece.tagAutocompleteIndex || 0) + 1
+    return
+  }
+
+  piece.tagAutocompleteIndex =
+      (piece.tagAutocompleteIndex || 0) <= 0 ? lastIndex : (piece.tagAutocompleteIndex || 0) - 1
+}
+
+const selectPieceAutocompleteTag = (piece, tag) => {
+  if (!(piece.tags || []).includes(tag)) {
+    piece.tags.push(tag)
+  }
+
+  piece.newTag = ''
+  closePieceTagAutocomplete(piece)
+}
+
+const handlePieceTagEnter = (piece) => {
+  const suggestions = getPieceTagSuggestions(piece)
+
+  if (showPieceTagAutocomplete(piece) && suggestions[piece.tagAutocompleteIndex || 0]) {
+    selectPieceAutocompleteTag(piece, suggestions[piece.tagAutocompleteIndex || 0])
+    return
+  }
+
+  addExistingTag(piece)
+}
+
 const setUploadMode = (mode) => {
   uploadMode.value = mode
   uploadMessage.value = ''
@@ -483,6 +687,8 @@ const loadArt = async () => {
       ...piece,
       imageUrl: getPublicImageUrl(piece.image_path),
       newTag: '',
+      isTagAutocompleteOpen: false,
+      tagAutocompleteIndex: 0,
       tags: [...(piece.tags || [])],
       originalTags: [...(piece.tags || [])],
       originalTitle: piece.title || '',
@@ -514,6 +720,7 @@ const addSingleTag = () => {
 
   singleArt.tags.push(cleanTag)
   singleTagInput.value = ''
+  closeSingleTagAutocomplete()
 }
 
 const removeSingleTag = (tagToRemove) => {
@@ -529,6 +736,7 @@ const resetSingleUploadForm = () => {
   singleTagInput.value = ''
   singleSelectedFile.value = null
   singleSelectedFileName.value = ''
+  closeSingleTagAutocomplete()
 
   if (singleFileInputRef.value) {
     singleFileInputRef.value.value = ''
@@ -672,6 +880,7 @@ const addExistingTag = (piece) => {
 
   piece.tags.push(cleanTag)
   piece.newTag = ''
+  closePieceTagAutocomplete(piece)
 }
 
 const removeExistingTag = (piece, tagToRemove) => {
@@ -841,9 +1050,44 @@ onMounted(async () => {
   max-width: 28rem;
 }
 
+.tag-entry-wrap {
+  position: relative;
+}
+
 .tag-entry-row {
   display: flex;
   gap: 0.75rem;
+}
+
+.tag-autocomplete {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 1rem;
+  padding: 0.4rem;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.tag-autocomplete-item {
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  color: var(--text-main);
+  border-radius: 0.8rem;
+  padding: 0.75rem 0.9rem;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.tag-autocomplete-item:hover,
+.tag-autocomplete-item-active {
+  background: var(--surface-hover);
 }
 
 .tag-add-btn,

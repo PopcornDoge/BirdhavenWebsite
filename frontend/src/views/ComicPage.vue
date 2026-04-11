@@ -26,16 +26,60 @@
             class="page-frame transition-all duration-1000 ease-out"
             :class="[
             visiblePages[index] !== false ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10',
-            widePages[index] ? 'page-frame-wide' : 'page-frame-normal'
+            widePages[index] ? 'page-frame-wide' : 'page-frame-normal',
+            activeHotspot?.pageId === page.id ? 'page-frame-active' : ''
           ]"
         >
-          <img
-              :src="page.src"
-              :alt="page.alt || page.name || chapterData.title"
-              class="comic-image"
-              loading="lazy"
-              @load="handleImageLoad($event, index)"
-          />
+          <div class="comic-image-wrap">
+            <img
+                :src="page.src"
+                :alt="page.alt || page.name || chapterData.title"
+                class="comic-image"
+                loading="lazy"
+                @load="handleImageLoad($event, index)"
+            />
+
+            <button
+                v-for="hotspot in page.hotspots || []"
+                :key="hotspot.id"
+                type="button"
+                class="comic-hotspot"
+                :style="getHotspotStyle(hotspot)"
+                :aria-label="hotspot.popupTitle || 'Comic concept explanation'"
+                @mouseenter="setActiveHotspot(page.id, hotspot.id)"
+                @mouseleave="clearActiveHotspot"
+                @focus="setActiveHotspot(page.id, hotspot.id)"
+                @blur="clearActiveHotspot"
+                @click="openHotspotLightbox(hotspot)"
+            >
+              <div
+                  v-if="isHotspotActive(page.id, hotspot.id)"
+                  class="hotspot-popup"
+                  :class="hotspot.popupPosition === 'left' ? 'hotspot-popup-left' : 'hotspot-popup-right'"
+                  :style="getPopupStyle(hotspot)"
+              >
+                <img
+                    v-if="hotspot.popupImage"
+                    :src="hotspot.popupImage"
+                    :alt="hotspot.popupTitle || 'Explanation image'"
+                    class="hotspot-popup-image"
+                />
+
+                <div
+                    v-if="hotspot.popupTitle || hotspot.popupText"
+                    class="hotspot-popup-copy"
+                >
+                  <p v-if="hotspot.popupTitle" class="hotspot-popup-title">
+                    {{ hotspot.popupTitle }}
+                  </p>
+
+                  <p v-if="hotspot.popupText" class="hotspot-popup-text">
+                    {{ hotspot.popupText }}
+                  </p>
+                </div>
+              </div>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -60,6 +104,28 @@
         </router-link>
       </div>
     </section>
+
+    <div
+        v-if="hotspotLightboxImage"
+        class="hotspot-lightbox"
+        @click="closeHotspotLightbox"
+    >
+      <button
+          type="button"
+          class="hotspot-lightbox-close"
+          @click.stop="closeHotspotLightbox"
+          aria-label="Close hotspot image"
+      >
+        ✕
+      </button>
+
+      <img
+          :src="hotspotLightboxImage"
+          alt="Expanded hotspot"
+          class="hotspot-lightbox-image"
+          @click.stop
+      />
+    </div>
   </main>
 </template>
 
@@ -79,6 +145,9 @@ const comicPages = ref([])
 const visiblePages = ref([])
 const widePages = ref([])
 const pageRefs = ref([])
+const activeHotspot = ref(null)
+const hotspotLightboxImage = ref('')
+
 let observer = null
 
 const normalizeSlug = (value) => String(value || '').trim().toLowerCase()
@@ -152,6 +221,71 @@ const setPageRef = (el, index) => {
 const handleImageLoad = (event, index) => {
   const img = event.target
   widePages.value[index] = img.naturalWidth > img.naturalHeight
+}
+
+const setActiveHotspot = (pageId, hotspotId) => {
+  activeHotspot.value = { pageId, hotspotId }
+}
+
+const clearActiveHotspot = () => {
+  activeHotspot.value = null
+}
+
+const isHotspotActive = (pageId, hotspotId) => {
+  return (
+      activeHotspot.value?.pageId === pageId &&
+      activeHotspot.value?.hotspotId === hotspotId
+  )
+}
+
+const getHotspotStyle = (hotspot) => {
+  return {
+    left: `${hotspot.x}%`,
+    top: `${hotspot.y}%`,
+    width: `${hotspot.width}%`,
+    height: `${hotspot.height}%`,
+  }
+}
+
+const getPopupStyle = (hotspot) => {
+  return {
+    width: hotspot.popupWidth || 'min(30vw, 400px)',
+    maxWidth: '90vw',
+    height: hotspot.popupHeight || 'auto',
+  }
+}
+
+const openHotspotLightbox = (hotspot) => {
+  if (!hotspot?.popupImage) return
+  hotspotLightboxImage.value = hotspot.popupImage
+  document.body.style.overflow = 'hidden'
+}
+
+const closeHotspotLightbox = () => {
+  hotspotLightboxImage.value = ''
+  document.body.style.overflow = ''
+}
+
+const getHotspotsForPage = (page) => {
+  const fileName = page.image_path?.split('/').pop()?.toLowerCase() || ''
+  const chapterSlug = chapterRecord.value?.slug || ''
+
+  if (chapterSlug === 'chapter1' && fileName.includes('ch1p15')) {
+    return [
+      {
+        id: 'Terubi Notes',
+        x: 55,
+        y: 85,
+        width: 39,
+        height: 10,
+        popupImage: 'https://kxucuowecyzvxihbfszq.supabase.co/storage/v1/object/public/hotspotNotes/voxernotesterubi.png',
+        popupWidth: 'min(30vw, 1000px)',
+        popupPosition: 'right',
+      }
+    ]
+  }
+
+  return []
 }
 
 const setupObserver = async () => {
@@ -241,12 +375,15 @@ const loadPages = async () => {
         ...page,
         src: getPublicImageUrl(page.image_path),
         name: page.image_path?.split('/').pop() || '',
+        hotspots: getHotspotsForPage(page),
       }))
 }
 
 const loadComicPage = async () => {
   isLoading.value = true
   loadError.value = ''
+  activeHotspot.value = null
+  hotspotLightboxImage.value = ''
 
   try {
     await loadChapters()
@@ -277,6 +414,7 @@ watch(
 
 onBeforeUnmount(() => {
   if (observer) observer.disconnect()
+  document.body.style.overflow = ''
 })
 </script>
 
@@ -290,8 +428,14 @@ onBeforeUnmount(() => {
 }
 
 .page-frame {
+  position: relative;
   margin-left: auto;
   margin-right: auto;
+  z-index: 1;
+}
+
+.page-frame-active {
+  z-index: 50;
 }
 
 .page-frame-normal {
@@ -322,12 +466,64 @@ onBeforeUnmount(() => {
   }
 }
 
+.comic-image-wrap {
+  position: relative;
+  width: 100%;
+  overflow: visible;
+  z-index: 1;
+}
+
 .comic-image {
   display: block;
   width: 100%;
   height: auto;
   object-fit: contain;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+}
+
+.comic-hotspot {
+  position: absolute;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  z-index: 60;
+}
+
+.hotspot-popup {
+  position: absolute;
+  top: 50%;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+  border-radius: 0;
+  z-index: 9999;
+  pointer-events: none;
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+.hotspot-popup-right {
+  left: 100%;
+  transform: translate(12px, -50%);
+}
+
+.hotspot-popup-left {
+  right: 100%;
+  transform: translate(-12px, -50%);
+}
+
+.hotspot-popup-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  margin: 0;
+  background: transparent;
+}
+
+.hotspot-popup-copy {
+  display: none;
 }
 
 .chapter-nav {
@@ -348,5 +544,45 @@ onBeforeUnmount(() => {
 .chapter-nav-btn:hover {
   transform: translateY(-1px);
   background: var(--surface-hover);
+}
+
+.hotspot-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.82);
+  padding: 1.5rem;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.hotspot-lightbox-image {
+  max-width: 92vw;
+  max-height: 90vh;
+  object-fit: contain;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+}
+
+.hotspot-lightbox-close {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.4);
+  color: white;
+  border-radius: 999px;
+  padding: 0.65rem 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .hotspot-popup {
+    width: 180px !important;
+    height: auto !important;
+  }
 }
 </style>
