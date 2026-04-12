@@ -270,14 +270,14 @@ const getHotspotsForPage = (page) => {
   const fileName = page.image_path?.split('/').pop()?.toLowerCase() || ''
   const chapterSlug = chapterRecord.value?.slug || ''
 
-  if (chapterSlug === 'chapter1' && fileName.includes('ch1p15')) {
+  if (chapterSlug === 'chapter2' && fileName.includes('ch2p36')) {
     return [
       {
         id: 'Terubi Notes',
-        x: 55,
-        y: 85,
-        width: 39,
-        height: 10,
+        x: 20,
+        y: 30,
+        width: 60,
+        height: 45,
         popupImage: 'https://kxucuowecyzvxihbfszq.supabase.co/storage/v1/object/public/hotspotNotes/voxernotesterubi.png',
         popupWidth: 'min(30vw, 1000px)',
         popupPosition: 'right',
@@ -489,6 +489,18 @@ onBeforeUnmount(() => {
   cursor: pointer;
   z-index: 60;
 }
+
+/*.comic-hotspot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.comic-hotspot:hover::after,
+.comic-hotspot:focus-visible::after {
+  border-color: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.08);
+}*/
 
 .hotspot-popup {
   position: absolute;

@@ -70,14 +70,6 @@ const images = [
     src: '/images/banner1.webp',
     alt: 'Banner 1',
   },
-  {
-    src: '/images/banner2.webp',
-    alt: 'Banner 2',
-  },
-  {
-    src: '/images/banner3.webp',
-    alt: 'Banner 3',
-  },
 ]
 
 const currentIndex = ref(0)

@@ -6,9 +6,9 @@
   <component name="ChangeListManager">
     <list default="true" id="4f7031e2-13e3-4faf-a87f-e8d670573ed8" name="Changes" comment="Changed default to light mode">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/views/AdminArtManager.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/AdminArtManager.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/views/AdminComics.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/AdminComics.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/views/ArtPage.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/ArtPage.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/public/images/banner2.webp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/public/images/banner3.webp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/HeroCarousel.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/HeroCarousel.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/views/ComicPage.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/ComicPage.vue" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -124,7 +124,7 @@
       <workItem from="1775671107569" duration="8397000" />
       <workItem from="1775748726556" duration="12328000" />
       <workItem from="1775829677650" duration="4971000" />
-      <workItem from="1775943132972" duration="2333000" />
+      <workItem from="1775943132972" duration="5291000" />
     </task>
     <task id="LOCAL-00002" summary="Initial Commit">
       <option name="closed" value="true" />
@@ -230,7 +230,15 @@
       <option name="project" value="LOCAL" />
       <updated>1775748876007</updated>
     </task>
-    <option name="localTasksCounter" value="15" />
+    <task id="LOCAL-00015" summary="Changed default to light mode">
+      <option name="closed" value="true" />
+      <created>1775948221039</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1775948221039</updated>
+    </task>
+    <option name="localTasksCounter" value="16" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
